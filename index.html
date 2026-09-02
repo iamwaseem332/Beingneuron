@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0B1A26" />
+
+    <!-- Primary SEO -->
+    <title>BeingNeuron — AI Research &amp; Learning Platform</title>
+    <meta
+      name="description"
+      content="BeingNeuron turns research papers into interactive, evidence-backed knowledge graphs (Synapse) and teaches machine learning through hands-on model debugging (NeuroSurgery). AI, neural networks, and research education in one workspace."
+    />
+    <meta
+      name="keywords"
+      content="AI research platform, knowledge graph, research paper analysis, machine learning education, neural networks, neurosurgery lab, Synapse, BeingNeuron"
+    />
+    <!-- Default for public pages; RouteMeta switches private routes to noindex at runtime -->
+    <meta name="robots" content="index,follow" />
+
+    <!-- Open Graph -->
+    <meta property="og:site_name" content="BeingNeuron" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="BeingNeuron — AI Research &amp; Learning Platform" />
+    <meta
+      property="og:description"
+      content="Turn research papers into explorable knowledge graphs. Break, diagnose, and repair neural networks. One workspace for research intelligence and AI learning."
+    />
+    <meta property="og:image" content="/og.svg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <!-- Twitter / X -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="BeingNeuron — AI Research &amp; Learning Platform" />
+    <meta
+      name="twitter:description"
+      content="Interactive knowledge graphs for research papers. Hands-on neural network debugging labs."
+    />
+    <meta name="twitter:image" content="/og.svg" />
+
+    <!-- Structured data -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "name": "BeingNeuron",
+            "description": "AI research & learning platform: research-paper intelligence and hands-on machine-learning education.",
+            "url": "https://beingneuron.example/"
+          },
+          {
+            "@type": "WebSite",
+            "name": "BeingNeuron",
+            "url": "https://beingneuron.example/",
+            "description": "Understand research. Explore ideas. Experiment with AI."
+          },
+          {
+            "@type": "SoftwareApplication",
+            "name": "Synapse by BeingNeuron",
+            "applicationCategory": "EducationalApplication",
+            "operatingSystem": "Web",
+            "description": "Domain-agnostic research-paper intelligence: interactive, evidence-backed knowledge graphs for AI, biology, medicine, physics, chemistry, psychology, economics and more."
+          },
+          {
+            "@type": "SoftwareApplication",
+            "name": "NeuroSurgery by BeingNeuron",
+            "applicationCategory": "EducationalApplication",
+            "operatingSystem": "Web",
+            "description": "Interactive machine-learning lab: diagnose and repair overfitting, dead ReLUs, vanishing and exploding gradients on real simulated neural networks."
+          }
+        ]
+      }
+    </script>
+
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230B1A26'/%3E%3Cg stroke='%237CE4D0' stroke-width='1.6' stroke-linecap='round'%3E%3Cpath d='M14.5 17.5 6.5 7.5'/%3E%3Cpath d='M16 15.5 23 6.5'/%3E%3Cpath d='M17.5 18 26 19.5'/%3E%3Cpath d='M15 20.5 10 26.5'/%3E%3C/g%3E%3Ccircle cx='16' cy='17' r='4.6' fill='%2335C4AE'/%3E%3Ccircle cx='6.5' cy='7.5' r='2' fill='%237CE4D0'/%3E%3Ccircle cx='23' cy='6.5' r='2' fill='%237CE4D0'/%3E%3Ccircle cx='26' cy='19.5' r='2' fill='%237CE4D0'/%3E%3Ccircle cx='10' cy='26.5' r='2' fill='%237CE4D0'/%3E%3C/svg%3E"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
