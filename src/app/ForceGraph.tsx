@@ -1,0 +1,533 @@
+/**
+ * Phase 7 — interactive force-directed graph renderer.
+ *
+ * Deliberately dependency-free: a compact force simulation + SVG rendering,
+ * lazy-loaded inside the graph route chunk so no graph library is ever
+ * loaded globally. Supports zoom (wheel, cursor-anchored), pan, node drag,
+ * node/edge selection, keyboard focus and animated reheat.
+ */
+
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEvent as RPointerEvent } from "react";
+import { usePrefersReducedMotion } from "../hooks";
+import { NODE_META, RELATION_META, type GraphEdge, type GraphNode, type NodeShape } from "./graphModel";
+
+type SimNode = { id: string; x: number; y: number; vx: number; vy: number; r: number };
+type Transform = { x: number; y: number; k: number };
+
+const LINK_DIST = 96;
+const CHARGE = -1500;
+const GRAVITY = 0.05;
+const DAMPING = 0.82;
+const ALPHA_DECAY = 0.026;
+
+export type ForceGraphProps = {
+  nodes: GraphNode[];
+  edges: GraphEdge[];
+  selectedNodeId: string | null;
+  selectedEdgeId: string | null;
+  highlightIds: Set<string> | null; // search matches (null = no search)
+  focusRequest: { id: string; nonce: number } | null;
+  resetNonce: number;
+  /** Imperative zoom: { factor: 1.3 | 0.75 | … , nonce } — applied around the viewport center. */
+  zoomRequest?: { factor: number; nonce: number } | null;
+  onSelectNode: (id: string | null) => void;
+  onSelectEdge: (id: string | null) => void;
+};
+
+function radiusOf(n: GraphNode): number {
+  return 8 + n.importance * 11 + (n.evidence_references.length > 2 ? 1.5 : 0);
+}
+
+function shapePath(shape: NodeShape, r: number): string {
+  switch (shape) {
+    case "diamond":
+      return `M0 ${-r} L${r} 0 L0 ${r} L${-r} 0 Z`;
+    case "hex":
+      return `M${-r} 0 L${-r / 2} ${-r * 0.87} L${r / 2} ${-r * 0.87} L${r} 0 L${r / 2} ${r * 0.87} L${-r / 2} ${r * 0.87} Z`;
+    case "tri":
+      return `M0 ${-r} L${r * 0.9} ${r * 0.72} L${-r * 0.9} ${r * 0.72} Z`;
+    case "square":
+      return `M${-r * 0.82} ${-r * 0.82} H${r * 0.82} V${r * 0.82} H${-r * 0.82} Z`;
+    default:
+      return "";
+  }
+}
+
+const TYPE_ORDER: GraphNode["type"][] = [
+  "research_question", "problem", "concept", "method", "model", "dataset",
+  "experiment", "result", "claim", "limitation", "conclusion",
+];
+
+export default function ForceGraph({
+  nodes,
+  edges,
+  selectedNodeId,
+  selectedEdgeId,
+  highlightIds,
+  focusRequest,
+  resetNonce,
+  zoomRequest,
+  onSelectNode,
+  onSelectEdge,
+}: ForceGraphProps) {
+  const reduced = usePrefersReducedMotion();
+  const wrapRef = useRef<HTMLDivElement | null>(null);
+  const svgRef = useRef<SVGSVGElement | null>(null);
+  const simRef = useRef<Map<string, SimNode>>(new Map());
+  const alphaRef = useRef(0);
+  const rafRef = useRef(0);
+  const [size, setSize] = useState({ w: 900, h: 560 });
+  const [t, setT] = useState<Transform>({ x: 0, y: 0, k: 1 });
+  const tRef = useRef(t);
+  tRef.current = t;
+  const [, setFrame] = useState(0); // re-render tick during simulation
+  const dragRef = useRef<{ mode: "pan" | "node"; id?: string; px: number; py: number; moved: boolean } | null>(null);
+  const [hovered, setHovered] = useState<string | null>(null);
+
+  const nodeById = useMemo(() => new Map(nodes.map((n) => [n.id, n])), [nodes]);
+
+  /* ---------- container size ---------- */
+  useLayoutEffect(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver((entries) => {
+      const r = entries[0]?.contentRect;
+      if (r) setSize({ w: Math.max(320, r.width), h: Math.max(320, r.height) });
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  /* ---------- simulation ---------- */
+  const seedAndSync = () => {
+    const sim = simRef.current;
+    const existing = new Set<string>();
+    nodes.forEach((n, i) => {
+      existing.add(n.id);
+      if (!sim.has(n.id)) {
+        const angle = (TYPE_ORDER.indexOf(n.type) / TYPE_ORDER.length) * Math.PI * 2 + (i % 5) * 0.35;
+        const ring = 120 + (i % 4) * 70;
+        sim.set(n.id, {
+          id: n.id,
+          x: Math.cos(angle) * ring + (Math.random() - 0.5) * 30,
+          y: Math.sin(angle) * ring + (Math.random() - 0.5) * 30,
+          vx: 0,
+          vy: 0,
+          r: radiusOf(n),
+        });
+      } else {
+        const s = sim.get(n.id)!;
+        s.r = radiusOf(n);
+      }
+    });
+    for (const key of [...sim.keys()]) if (!existing.has(key)) sim.delete(key);
+  };
+
+  const tick = () => {
+    const sim = simRef.current;
+    const list = nodes.map((n) => sim.get(n.id)!).filter(Boolean);
+    // repulsion (O(n²) — fine at graph scale)
+    for (let i = 0; i < list.length; i += 1) {
+      for (let j = i + 1; j < list.length; j += 1) {
+        const a = list[i];
+        const b = list[j];
+        let dx = b.x - a.x;
+        let dy = b.y - a.y;
+        let d2 = dx * dx + dy * dy;
+        if (d2 < 1) {
+          dx = Math.random() - 0.5;
+          dy = Math.random() - 0.5;
+          d2 = dx * dx + dy * dy;
+        }
+        const d = Math.sqrt(d2);
+        const f = CHARGE / d2;
+        const fx = (dx / d) * f;
+        const fy = (dy / d) * f;
+        a.vx -= fx;
+        a.vy -= fy;
+        b.vx += fx;
+        b.vy += fy;
+      }
+    }
+    // springs
+    for (const e of edges) {
+      const a = sim.get(e.source);
+      const b = sim.get(e.target);
+      if (!a || !b) continue;
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      const d = Math.max(1, Math.hypot(dx, dy));
+      const f = ((d - LINK_DIST) / d) * 0.055;
+      a.vx += dx * f;
+      a.vy += dy * f;
+      b.vx -= dx * f;
+      b.vy -= dy * f;
+    }
+    // gravity + integrate
+    for (const s of list) {
+      s.vx -= s.x * GRAVITY * 0.02;
+      s.vy -= s.y * GRAVITY * 0.02;
+      s.vx *= DAMPING;
+      s.vy *= DAMPING;
+      s.x += s.vx * alphaRef.current;
+      s.y += s.vy * alphaRef.current;
+    }
+  };
+
+  const fitView = (animate: boolean) => {
+    const sim = simRef.current;
+    const pts = nodes.map((n) => sim.get(n.id)).filter(Boolean) as SimNode[];
+    if (pts.length === 0) return;
+    const xs = pts.map((p) => p.x);
+    const ys = pts.map((p) => p.y);
+    const minX = Math.min(...xs) - 60;
+    const maxX = Math.max(...xs) + 60;
+    const minY = Math.min(...ys) - 60;
+    const maxY = Math.max(...ys) + 60;
+    const k = Math.min(2.2, Math.max(0.28, Math.min(size.w / (maxX - minX), size.h / (maxY - minY)) * 0.92));
+    const next = { k, x: size.w / 2 - ((minX + maxX) / 2) * k, y: size.h / 2 - ((minY + maxY) / 2) * k };
+    if (!animate || reduced) {
+      setT(next);
+      return;
+    }
+    const from = { ...tRef.current };
+    const start = performance.now();
+    const dur = 480;
+    const step = (now: number) => {
+      const p = Math.min(1, (now - start) / dur);
+      const ease = 1 - Math.pow(1 - p, 3);
+      setT({
+        k: from.k + (next.k - from.k) * ease,
+        x: from.x + (next.x - from.x) * ease,
+        y: from.y + (next.y - from.y) * ease,
+      });
+      if (p < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  };
+
+  /* boot / data change */
+  useEffect(() => {
+    seedAndSync();
+    if (reduced) {
+      alphaRef.current = 1;
+      for (let i = 0; i < 320; i += 1) {
+        alphaRef.current = Math.max(0.02, alphaRef.current * (1 - ALPHA_DECAY));
+        tick();
+      }
+      alphaRef.current = 0;
+      setFrame((f) => f + 1);
+      fitView(false);
+      return;
+    }
+    alphaRef.current = 0.95;
+    cancelAnimationFrame(rafRef.current);
+    const loop = () => {
+      if (alphaRef.current > 0.006 && !dragRef.current) {
+        alphaRef.current *= 1 - ALPHA_DECAY;
+        tick();
+        setFrame((f) => f + 1);
+      } else if (dragRef.current) {
+        tick();
+        setFrame((f) => f + 1);
+      }
+      rafRef.current = requestAnimationFrame(loop);
+    };
+    rafRef.current = requestAnimationFrame(loop);
+    const fitTimer = window.setTimeout(() => fitView(true), 700);
+    return () => {
+      cancelAnimationFrame(rafRef.current);
+      window.clearTimeout(fitTimer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nodes, edges, reduced, size.w, size.h]);
+
+  /* focus a node (from search) */
+  useEffect(() => {
+    if (!focusRequest) return;
+    const s = simRef.current.get(focusRequest.id);
+    if (!s) return;
+    const k = Math.max(tRef.current.k, 1.1);
+    setT({ k, x: size.w / 2 - s.x * k, y: size.h / 2 - s.y * k });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusRequest?.nonce]);
+
+  /* imperative zoom (toolbar +/−), anchored at the viewport center */
+  useEffect(() => {
+    if (!zoomRequest) return;
+    setT((prev) => {
+      const k = Math.min(3, Math.max(0.25, prev.k * zoomRequest.factor));
+      const cx = size.w / 2;
+      const cy = size.h / 2;
+      return { k, x: cx - ((cx - prev.x) / prev.k) * k, y: cy - ((cy - prev.y) / prev.k) * k };
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [zoomRequest?.nonce]);
+
+  /* reset */
+  useEffect(() => {
+    if (resetNonce > 0) fitView(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resetNonce]);
+
+  /* ---------- wheel zoom (non-passive) ---------- */
+  useEffect(() => {
+    const el = svgRef.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const rect = el.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
+      setT((prev) => {
+        const k = Math.min(3, Math.max(0.25, prev.k * Math.exp(-e.deltaY * 0.0016)));
+        return { k, x: mx - ((mx - prev.x) / prev.k) * k, y: my - ((my - prev.y) / prev.k) * k };
+      });
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, []);
+
+  /* ---------- pointer interactions ---------- */
+  const screenToWorld = (px: number, py: number) => {
+    const cur = tRef.current;
+    return { x: (px - cur.x) / cur.k, y: (py - cur.y) / cur.k };
+  };
+
+  const onPointerDown = (e: RPointerEvent<SVGSVGElement>) => {
+    const rect = svgRef.current!.getBoundingClientRect();
+    dragRef.current = { mode: "pan", px: e.clientX - rect.left, py: e.clientY - rect.top, moved: false };
+    (e.target as Element).setPointerCapture?.(e.pointerId);
+  };
+
+  const onNodePointerDown = (e: RPointerEvent<SVGGElement>, id: string) => {
+    e.stopPropagation();
+    const rect = svgRef.current!.getBoundingClientRect();
+    dragRef.current = { mode: "node", id, px: e.clientX - rect.left, py: e.clientY - rect.top, moved: false };
+    alphaRef.current = Math.max(alphaRef.current, 0.3);
+    (e.currentTarget as Element).setPointerCapture?.(e.pointerId);
+  };
+
+  const onPointerMove = (e: RPointerEvent<SVGSVGElement>) => {
+    const d = dragRef.current;
+    if (!d) return;
+    const rect = svgRef.current!.getBoundingClientRect();
+    const px = e.clientX - rect.left;
+    const py = e.clientY - rect.top;
+    const dx = px - d.px;
+    const dy = py - d.py;
+    if (Math.abs(dx) + Math.abs(dy) > 3) d.moved = true;
+    if (d.mode === "pan") {
+      setT((prev) => ({ ...prev, x: prev.x + dx, y: prev.y + dy }));
+    } else if (d.mode === "node" && d.id) {
+      const w = screenToWorld(px, py);
+      const s = simRef.current.get(d.id);
+      if (s) {
+        s.x = w.x;
+        s.y = w.y;
+        s.vx = 0;
+        s.vy = 0;
+        alphaRef.current = Math.max(alphaRef.current, 0.25);
+      }
+    }
+    d.px = px;
+    d.py = py;
+  };
+
+  const onPointerUp = () => {
+    const d = dragRef.current;
+    dragRef.current = null;
+    if (d && !d.moved && d.mode === "pan") {
+      onSelectNode(null);
+      onSelectEdge(null);
+    }
+    alphaRef.current = Math.max(alphaRef.current, 0.12);
+  };
+
+  /* ---------- render ---------- */
+  const sim = simRef.current;
+  const pos = (id: string) => sim.get(id);
+  const isDimmed = (id: string) =>
+    (highlightIds !== null && !highlightIds.has(id)) ||
+    (selectedNodeId !== null && id !== selectedNodeId && !edges.some((e) => (e.source === selectedNodeId || e.target === selectedNodeId) && (e.source === id || e.target === id)));
+  const showLabels = t.k > 0.55;
+
+  return (
+    <div ref={wrapRef} className="relative h-full w-full overflow-hidden">
+      <svg
+        ref={svgRef}
+        width={size.w}
+        height={size.h}
+        className="block cursor-grab touch-none select-none active:cursor-grabbing"
+        role="application"
+        aria-label="Knowledge graph canvas — scroll to zoom, drag to pan, click nodes and edges to inspect"
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
+      >
+        <defs>
+          {(["teal", "amber", "steel", "paper"] as const).map((c) => (
+            <marker
+              key={c}
+              id={`arrow-${c}`}
+              viewBox="0 0 10 10"
+              refX="9"
+              refY="5"
+              markerWidth="7"
+              markerHeight="7"
+              orient="auto-start-reverse"
+            >
+              <path
+                d="M0 0 L10 5 L0 10 z"
+                fill={
+                  c === "teal" ? "var(--color-pulse-400)" : c === "amber" ? "var(--color-signal-400)" : c === "paper" ? "rgba(242,244,239,0.55)" : "#8fb0c6"
+                }
+              />
+            </marker>
+          ))}
+        </defs>
+
+        <g transform={`translate(${t.x} ${t.y}) scale(${t.k})`}>
+          {/* edges */}
+          {edges.map((e) => {
+            const a = pos(e.source);
+            const b = pos(e.target);
+            if (!a || !b) return null;
+            const meta = RELATION_META[e.kind];
+            const selected = selectedEdgeId === e.id;
+            const touches = selectedNodeId !== null && (e.source === selectedNodeId || e.target === selectedNodeId);
+            const dim =
+              (highlightIds !== null && !(highlightIds.has(e.source) && highlightIds.has(e.target))) ||
+              (selectedNodeId !== null && !touches && !selected);
+            const color = selected ? "var(--color-paper)" : meta.color;
+            const markerGroup =
+              meta.color.includes("signal") ? "amber" : meta.color.includes("pulse") ? "teal" : meta.color.includes("242,244,239") ? "paper" : "steel";
+            return (
+              <g key={e.id} opacity={dim ? 0.1 : selected || touches ? 1 : 0.62} style={{ transition: "opacity .25s ease" }}>
+                <line
+                  x1={a.x}
+                  y1={a.y}
+                  x2={b.x}
+                  y2={b.y}
+                  stroke={color}
+                  strokeWidth={selected ? 2.2 : touches ? 1.8 : 1.1}
+                  strokeDasharray={meta.dash ?? undefined}
+                  markerEnd={`url(#arrow-${markerGroup})`}
+                  style={{ transition: "stroke .25s ease" }}
+                />
+                {selected && !reduced && (
+                  <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="var(--color-pulse-300)" strokeWidth="2.4" className="edge-flow" />
+                )}
+                {/* wide invisible hit area */}
+                <line
+                  x1={a.x}
+                  y1={a.y}
+                  x2={b.x}
+                  y2={b.y}
+                  stroke="transparent"
+                  strokeWidth={14}
+                  className="cursor-pointer"
+                  onPointerDown={(ev) => ev.stopPropagation()}
+                  onClick={(ev) => {
+                    ev.stopPropagation();
+                    onSelectEdge(e.id);
+                    onSelectNode(null);
+                  }}
+                />
+                {(selected || (touches && t.k > 1.15)) && (
+                  <text
+                    x={(a.x + b.x) / 2}
+                    y={(a.y + b.y) / 2 - 6}
+                    textAnchor="middle"
+                    fontFamily="var(--font-mono)"
+                    fontSize={10 / Math.max(t.k, 0.8)}
+                    fill="var(--color-paper)"
+                    stroke="var(--color-ink-950)"
+                    strokeWidth={3 / t.k}
+                    paintOrder="stroke"
+                    style={{ pointerEvents: "none" }}
+                  >
+                    {meta.label}
+                  </text>
+                )}
+              </g>
+            );
+          })}
+
+          {/* nodes */}
+          {nodes.map((n) => {
+            const s = pos(n.id);
+            if (!s) return null;
+            const meta = NODE_META[n.type];
+            const selected = selectedNodeId === n.id;
+            const hoveredNode = hovered === n.id;
+            const dim = isDimmed(n.id);
+            const r = s.r;
+            const labelVisible = showLabels || selected || hoveredNode || n.importance > 0.72;
+            return (
+              <g
+                key={n.id}
+                transform={`translate(${s.x} ${s.y})`}
+                opacity={dim ? 0.16 : 1}
+                className="cursor-pointer"
+                style={{ transition: "opacity .25s ease" }}
+                onPointerDown={(e) => onNodePointerDown(e, n.id)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (!dragRef.current?.moved) {
+                    onSelectNode(n.id);
+                    onSelectEdge(null);
+                  }
+                }}
+                onPointerEnter={() => setHovered(n.id)}
+                onPointerLeave={() => setHovered((h) => (h === n.id ? null : h))}
+                role="button"
+                aria-label={`${meta.label}: ${n.label}`}
+              >
+                {selected && <circle r={r + 7} fill="none" stroke="var(--color-pulse-300)" strokeWidth="1.2" strokeDasharray="3 4" className={reduced ? "" : "anim-breathe"} />}
+                {meta.shape === "circle" || meta.shape === "ring" ? (
+                  <circle
+                    r={hoveredNode ? r + 1.5 : r}
+                    fill={meta.shape === "ring" ? "var(--color-ink-950)" : meta.color}
+                    stroke={meta.color}
+                    strokeWidth={meta.shape === "ring" ? 2.4 : 1.4}
+                    style={{ transition: "r .2s ease" }}
+                  />
+                ) : (
+                  <path
+                    d={shapePath(meta.shape, hoveredNode ? r + 1.5 : r)}
+                    fill={meta.color}
+                    stroke="var(--color-ink-950)"
+                    strokeWidth="1.2"
+                  />
+                )}
+                {n.uncertain && <circle r={2.6} cx={r * 0.8} cy={-r * 0.8} fill="var(--color-signal-400)" stroke="var(--color-ink-950)" strokeWidth="1" />}
+                {labelVisible && (
+                  <text
+                    y={r + 13}
+                    textAnchor="middle"
+                    fontFamily="var(--font-mono)"
+                    fontSize={10.5 / Math.max(t.k, 0.75)}
+                    fill={selected ? "var(--color-paper)" : "rgba(242,244,239,0.72)"}
+                    stroke="var(--color-ink-950)"
+                    strokeWidth={3 / Math.max(t.k, 0.75)}
+                    paintOrder="stroke"
+                    style={{ pointerEvents: "none" }}
+                  >
+                    {n.label.length > 30 && !selected ? n.label.slice(0, 29) + "…" : n.label}
+                  </text>
+                )}
+              </g>
+            );
+          })}
+        </g>
+      </svg>
+
+      {/* zoom readout */}
+      <div className="pointer-events-none absolute bottom-3 right-3 rounded-md border border-paper/12 bg-ink-950/80 px-2.5 py-1 font-mono text-[9.5px] tracking-[0.16em] text-paper/50 backdrop-blur-sm">
+        zoom {(t.k * 100).toFixed(0)}%
+      </div>
+    </div>
+  );
+}

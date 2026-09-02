@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <pattern id="grid" width="46" height="46" patternUnits="userSpaceOnUse">
+      <path d="M46 0H0v46" fill="none" stroke="rgba(124,228,208,0.05)" stroke-width="1"/>
+    </pattern>
+    <radialGradient id="glow" cx="78%" cy="42%" r="55%">
+      <stop offset="0%" stop-color="rgba(18,163,146,0.22)"/>
+      <stop offset="100%" stop-color="rgba(18,163,146,0)"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="630" fill="#0B1A26"/>
+  <rect width="1200" height="630" fill="url(#grid)"/>
+  <rect width="1200" height="630" fill="url(#glow)"/>
+
+  <!-- knowledge-graph lattice -->
+  <g stroke="rgba(124,228,208,0.28)" stroke-width="1.2">
+    <path d="M760 150 L905 96 M905 96 L1060 170 M1060 170 L1120 330 M1120 330 L1010 470 M1010 470 L830 500 M830 500 L700 380 M700 380 L760 150 M760 150 L1010 470 M905 96 L830 500 M1060 170 L700 380 M700 380 L905 96 M1120 330 L760 150"/>
+    <path d="M700 380 L560 470 M560 470 L640 585 M830 500 L760 610" opacity="0.5"/>
+  </g>
+  <g fill="#0F2130" stroke="#35C4AE" stroke-width="1.6">
+    <circle cx="760" cy="150" r="13"/><circle cx="905" cy="96" r="9"/><circle cx="1060" cy="170" r="11"/>
+    <circle cx="1120" cy="330" r="9"/><circle cx="1010" cy="470" r="12"/><circle cx="830" cy="500" r="9"/>
+    <circle cx="700" cy="380" r="10"/><circle cx="560" cy="470" r="7"/><circle cx="640" cy="585" r="6"/>
+  </g>
+  <circle cx="905" cy="300" r="26" fill="#12A392"/>
+  <circle cx="905" cy="300" r="26" fill="none" stroke="#7CE4D0" stroke-width="1.4" opacity="0.7"/>
+  <circle cx="1060" cy="170" r="4" fill="#ECAB42" stroke="none"/>
+  <circle cx="830" cy="500" r="4" fill="#ECAB42" stroke="none"/>
+
+  <!-- wordmark -->
+  <g font-family="'Space Grotesk', 'Segoe UI', sans-serif">
+    <text x="96" y="300" font-size="76" font-weight="500" fill="#F2F4EF" letter-spacing="-1">Being<tspan font-weight="700">Neuron</tspan></text>
+    <text x="98" y="352" font-size="23" fill="rgba(242,244,239,0.72)" letter-spacing="0.5">Understand research. Explore ideas. Experiment with AI.</text>
+    <text x="98" y="404" font-size="15" fill="#7CE4D0" letter-spacing="4" font-family="'IBM Plex Mono', monospace">SYNAPSE · KNOWLEDGE GRAPHS&#160;&#160;—&#160;&#160;NEUROSURGERY · MODEL DEBUG LAB</text>
+  </g>
+
+  <rect x="0" y="602" width="1200" height="28" fill="rgba(6,15,24,0.6)"/>
+  <text x="96" y="621" font-size="13" fill="rgba(242,244,239,0.4)" font-family="'IBM Plex Mono', monospace" letter-spacing="2">AI RESEARCH &amp; LEARNING PLATFORM</text>
+</svg>

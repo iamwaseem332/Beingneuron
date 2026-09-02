@@ -1,0 +1,14 @@
+# BeingNeuron — crawler policy
+#
+# The public marketing site (home, pricing, project preview) is indexable.
+# Authenticated workspace screens (/dashboard, /app/*, /usage, /profile,
+# /settings) and auth flows additionally emit <meta name="robots"
+# content="noindex,nofollow"> at runtime, so private data never enters
+# search indexes even if a URL leaks.
+
+User-agent: *
+Allow: /
+
+# Note: the app uses hash-based routing (#/path). Crawlers treat the
+# fragment as part of one document — see DEPLOYMENT.md for the
+# BrowserRouter migration plan if per-route crawling becomes a goal.
