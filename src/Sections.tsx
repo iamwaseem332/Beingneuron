@@ -10,9 +10,9 @@ import { IconCompass, IconLens, IconSliders, IconGraph, IconDoc, IconPulse } fro
 export function HowItWorks() {
   const icons = [IconCompass, IconLens, IconSliders];
   return (
-    <section id="how" className="relative scroll-mt-20 overflow-hidden bg-ink-950 py-24 text-paper lg:py-28">
+    <section id="how" className="relative scroll-mt-20 overflow-hidden bg-black py-24 text-paper lg:py-28">
       <div className="bg-grid-dark absolute inset-0 opacity-70" />
-      <div className="absolute -right-52 top-0 h-[560px] w-[560px] rounded-full bg-[radial-gradient(circle,rgba(18,163,146,0.12),transparent_62%)]" />
+      <div className="absolute -right-52 top-0 h-[560px] w-[560px] rounded-full bg-[radial-gradient(circle,rgba(18,163,146,0.15),transparent_62%)]" />
 
       <div className="relative mx-auto max-w-7xl px-5 sm:px-8">
         <SectionHead
@@ -33,7 +33,7 @@ export function HowItWorks() {
             return (
               <Reveal key={s.n} delay={i * 140} className={`relative ${stagger}`}>
                 <div className="relative">
-                  <span className="relative z-10 inline-flex h-[15px] w-[15px] items-center justify-center rounded-full border-2 border-pulse-400 bg-ink-950">
+                  <span className="relative z-10 inline-flex h-[15px] w-[15px] items-center justify-center rounded-full border-2 border-pulse-400 bg-black">
                     <span className="h-[5px] w-[5px] rounded-full bg-pulse-400" />
                   </span>
                   <div className="mt-6 flex items-center gap-4">
@@ -309,7 +309,7 @@ export function CTABand() {
   const reduced = usePrefersReducedMotion();
   const kicker = useScramble("PHASE 01 — OPEN PREVIEW", 200);
   return (
-    <section className="relative overflow-hidden bg-ink-950 py-24 text-paper lg:py-28">
+    <section className="relative overflow-hidden bg-black py-24 text-paper lg:py-28">
       <div className="bg-grid-dark absolute inset-0" />
       <div className="absolute left-1/2 top-1/2 h-[620px] w-[920px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(ellipse,rgba(18,163,146,0.14),transparent_62%)]" />
       <div className="relative mx-auto max-w-4xl px-5 text-center sm:px-8">
