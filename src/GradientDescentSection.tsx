@@ -553,11 +553,11 @@ export default function GradientDescentSection() {
   }, [resetOptimization]);
 
   return (
-    <section id="gradient-descent" className="relative scroll-mt-20 overflow-hidden bg-ink-950 py-24 text-paper lg:py-28">
+    <section id="gradient-descent" className="relative scroll-mt-20 overflow-hidden bg-black py-24 text-paper lg:py-28">
       {/* Background elements */}
       <div className="absolute inset-0 bg-grid-dark opacity-70" />
-      <div className="absolute -left-48 top-0 h-[620px] w-[620px] rounded-full bg-[radial-gradient(circle,rgba(18,163,146,0.10),transparent_62%)]" />
-      <div className="absolute -right-32 bottom-0 h-[480px] w-[480px] rounded-full bg-[radial-gradient(circle,rgba(244,162,97,0.08),transparent_62%)]" />
+      <div className="absolute -left-48 top-0 h-[620px] w-[620px] rounded-full bg-[radial-gradient(circle,rgba(18,163,146,0.12),transparent_62%)]" />
+      <div className="absolute -right-32 bottom-0 h-[480px] w-[480px] rounded-full bg-[radial-gradient(circle,rgba(18,163,146,0.08),transparent_62%)]" />
 
       <div className="relative mx-auto max-w-7xl px-5 sm:px-8">
         {/* Section header */}

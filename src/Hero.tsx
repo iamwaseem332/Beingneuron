@@ -8,7 +8,7 @@ import HeroNetwork from "./HeroNetwork";
 function DomainTicker() {
   const loop = [...DOMAINS, ...DOMAINS];
   return (
-    <div className="relative border-t border-paper/10">
+    <div className="relative border-t border-pulse-400/10">
       <div className="mx-auto flex max-w-7xl items-center gap-6 overflow-hidden px-5 py-4 sm:px-8">
         <p className="hidden shrink-0 font-mono text-[10px] uppercase tracking-[0.22em] text-pulse-300/80 md:block">
           Domain-agnostic
@@ -25,8 +25,8 @@ function DomainTicker() {
               </span>
             ))}
           </div>
-          <div className="pointer-events-none absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-ink-950 to-transparent" />
-          <div className="pointer-events-none absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-ink-950 to-transparent" />
+          <div className="pointer-events-none absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-black to-transparent" />
+          <div className="pointer-events-none absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-black to-transparent" />
         </div>
       </div>
     </div>
@@ -42,17 +42,17 @@ export default function Hero() {
   const go = (id: string) => () => scrollToSection(id, !reduced);
 
   return (
-    <section className="relative overflow-hidden bg-ink-950 text-paper">
+    <section className="relative overflow-hidden bg-black text-paper">
       {/* layered ambient background */}
       <div className="bg-grid-dark absolute inset-0" />
-      <div className="absolute -right-40 -top-48 h-[820px] w-[820px] rounded-full bg-[radial-gradient(circle,rgba(18,163,146,0.16),transparent_62%)]" />
-      <div className="absolute -bottom-64 -left-48 h-[700px] w-[700px] rounded-full bg-[radial-gradient(circle,rgba(44,76,99,0.35),transparent_65%)]" />
+      <div className="absolute -right-40 -top-48 h-[820px] w-[820px] rounded-full bg-[radial-gradient(circle,rgba(18,163,146,0.2),transparent_62%)]" />
+      <div className="absolute -bottom-64 -left-48 h-[700px] w-[700px] rounded-full bg-[radial-gradient(circle,rgba(18,163,146,0.15),transparent_65%)]" />
 
       {/* drifting deco nodes */}
       <div className="anim-floaty absolute left-[8%] top-32 hidden text-pulse-400/40 xl:block" style={{ animationDelay: "0.8s" }}>
         <NodeDot size={9} />
       </div>
-      <div className="anim-floaty absolute right-[4%] top-[58%] hidden text-paper/20 xl:block" style={{ animationDelay: "2.2s" }}>
+      <div className="anim-floaty absolute right-[4%] top-[58%] hidden text-pulse-400/20 xl:block" style={{ animationDelay: "2.2s" }}>
         <NodeDot size={7} />
       </div>
 
@@ -92,14 +92,14 @@ export default function Hero() {
             </Reveal>
 
             <Reveal delay={430}>
-              <div className="mt-10 space-y-2 border-t border-paper/10 pt-5 text-paper/50">
+              <div className="mt-10 space-y-2 border-t border-pulse-400/10 pt-5 text-paper/50">
                 <StatusLine>
                   <span>synapse.engine — knowledge graphs · standby</span>
                 </StatusLine>
                 <StatusLine>
                   <span>neurosurgery.lab — debug environment · standby</span>
                 </StatusLine>
-                <StatusLine marker="●" markerClass="text-signal-400">
+                <StatusLine marker="●" markerClass="text-pulse-400">
                   <span>
                     phase.01 — foundation &amp; public pages · live
                     <span className="anim-blink ml-1 inline-block text-pulse-300">▍</span>
