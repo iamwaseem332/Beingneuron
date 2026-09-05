@@ -4,6 +4,7 @@ import Hero from "./Hero";
 import SynapseSection from "./SynapseSection";
 import NeuroSurgerySection from "./NeuroSurgerySection";
 import GradientDescentSection from "./GradientDescentSection";
+import AlgorithmsLoopSection from "./AlgorithmsLoopSection";
 import PricingPreview from "./PricingPreview";
 import { CTABand, HowItWorks, WhyBeingNeuron } from "./Sections";
 import { usePrefersReducedMotion } from "./hooks";
@@ -34,6 +35,7 @@ export default function Landing() {
         <NeuroSurgerySection />
         <GradientDescentSection />
       </div>
+      <AlgorithmsLoopSection />
       <HowItWorks />
       <WhyBeingNeuron />
       <PricingPreview />
