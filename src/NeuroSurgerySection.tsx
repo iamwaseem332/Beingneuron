@@ -136,28 +136,28 @@ export default function NeuroSurgerySection() {
   };
 
   return (
-    <section id="neurosurgery" className="relative scroll-mt-20 bg-paper pb-24 lg:pb-32">
+    <section id="neurosurgery" className="relative scroll-mt-20 bg-paper pb-16 lg:pb-20">
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
-        <div className="grid items-center gap-14 lg:grid-cols-12 lg:gap-16">
+        <div className="grid items-center gap-10 lg:grid-cols-12 lg:gap-12">
           {/* lab visual */}
           <div className="order-2 lg:order-1 lg:col-span-7">
             <Reveal delay={160}>
-              <div className="overflow-hidden rounded-xl border border-ink-800 bg-ink-950 text-paper shadow-[0_35px_80px_-35px_rgba(6,15,24,0.6)]">
-                <div className="flex items-center justify-between border-b border-paper/10 px-4 py-2.5">
+              <div className="overflow-hidden rounded-lg border border-ink-800 bg-ink-950 text-paper shadow-[0_25px_60px_-25px_rgba(6,15,24,0.6)]">
+                <div className="flex items-center justify-between border-b border-paper/10 px-3 py-2">
                   <div className="flex items-center gap-1.5">
                     <span className="h-2 w-2 rounded-full bg-ink-600" />
                     <span className="h-2 w-2 rounded-full bg-signal-400/80" />
                     <span className="h-2 w-2 rounded-full bg-ink-600" />
                   </div>
-                  <p className="font-mono text-[10.5px] tracking-[0.16em] text-paper/50">
+                  <p className="font-mono text-[9.5px] tracking-[0.16em] text-paper/50">
                     NEUROSURGERY — SESSION 0041
                   </p>
-                  <p className="font-mono text-[10.5px] text-paper/40">model: mlp-4l</p>
+                  <p className="font-mono text-[9.5px] text-paper/40">model: mlp-4l</p>
                 </div>
 
-                <div className="grid gap-4 p-4 sm:p-5 md:grid-cols-5">
+                <div className="grid gap-3 p-3 sm:p-4 md:grid-cols-5">
                   {/* network */}
-                  <div className="relative rounded-lg border border-paper/10 bg-ink-900/70 md:col-span-3">
+                  <div className="relative rounded-md border border-paper/10 bg-ink-900/70 md:col-span-3">
                     <svg viewBox="0 0 420 300" className="h-auto w-full" role="img" aria-label="Neural network with diagnosable faults">
                       {edges.map((e) => {
                         const a = byId[e.a];
@@ -265,7 +265,7 @@ export default function NeuroSurgerySection() {
                         </text>
                       ))}
                     </svg>
-                    <p className="absolute left-2.5 top-2.5 font-mono text-[9.5px] tracking-[0.18em] text-paper/35">
+                    <p className="absolute left-2 top-2 font-mono text-[8.5px] tracking-[0.18em] text-paper/35">
                       TOPOLOGY 3·5·4·2
                     </p>
                   </div>
@@ -274,7 +274,7 @@ export default function NeuroSurgerySection() {
                   <div className="flex flex-col md:col-span-2">
                     <div
                       ref={consoleRef}
-                      className="h-44 flex-1 overflow-y-auto rounded-lg border border-paper/10 bg-ink-900 p-3 font-mono text-[11px] leading-[1.75] tracking-wide"
+                      className="h-36 flex-1 overflow-y-auto rounded-md border border-paper/10 bg-ink-900 p-2.5 font-mono text-[10px] leading-[1.7] tracking-wide"
                       aria-live="polite"
                     >
                       {log.map((line, i) => (
@@ -298,12 +298,12 @@ export default function NeuroSurgerySection() {
                       )}
                     </div>
 
-                    <div className="mt-3 flex flex-wrap gap-2.5">
+                    <div className="mt-2.5 flex flex-wrap gap-2">
                       <button
                         type="button"
                         onClick={runDiagnosis}
                         disabled={phase === "diagnosing" || phase === "repairing"}
-                        className="rounded-full bg-pulse-400 px-4 py-2 font-display text-[12.5px] font-semibold text-ink-950 transition-all hover:bg-pulse-300 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-40"
+                        className="rounded-full bg-pulse-400 px-3.5 py-1.5 font-display text-[11.5px] font-semibold text-ink-950 transition-all hover:bg-pulse-300 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-40"
                       >
                         {phase === "repaired" ? "Rescan" : "Run diagnosis"}
                       </button>
@@ -311,7 +311,7 @@ export default function NeuroSurgerySection() {
                         type="button"
                         onClick={runRepair}
                         disabled={phase !== "faulty"}
-                        className="rounded-full border border-signal-400/60 px-4 py-2 font-display text-[12.5px] font-semibold text-signal-300 transition-all hover:bg-signal-400 hover:text-ink-950 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:bg-transparent disabled:hover:text-signal-300"
+                        className="rounded-full border border-signal-400/60 px-3.5 py-1.5 font-display text-[11.5px] font-semibold text-signal-300 transition-all hover:bg-signal-400 hover:text-ink-950 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:bg-transparent disabled:hover:text-signal-300"
                       >
                         Apply repair
                       </button>
@@ -319,7 +319,7 @@ export default function NeuroSurgerySection() {
                         type="button"
                         onClick={reset}
                         disabled={phase === "idle"}
-                        className="rounded-full px-3 py-2 font-mono text-[11px] tracking-wide text-paper/50 transition-colors hover:text-paper disabled:cursor-not-allowed disabled:opacity-35"
+                        className="rounded-full px-2.5 py-1.5 font-mono text-[10px] tracking-wide text-paper/50 transition-colors hover:text-paper disabled:cursor-not-allowed disabled:opacity-35"
                       >
                         reset
                       </button>
@@ -333,21 +333,21 @@ export default function NeuroSurgerySection() {
                     { label: "gradient flow", value: metrics.grad, unit: "%", invert: false },
                     { label: "signal integrity", value: metrics.integ, unit: "%", invert: false },
                   ].map((m) => (
-                    <div key={m.label} className="px-4 py-3.5">
-                      <p className="font-mono text-[9.5px] uppercase tracking-[0.18em] text-paper/40">
+                    <div key={m.label} className="px-3 py-2.5">
+                      <p className="font-mono text-[8.5px] uppercase tracking-[0.18em] text-paper/40">
                         {m.label}
                       </p>
-                      <p className="tnum mt-1.5 font-display text-xl font-semibold">
+                      <p className="tnum mt-1 font-display text-lg font-semibold">
                         {m.value === null ? <span className="text-paper/30">—</span> : (
                           <>
                             <span className={m.value < 50 ? "text-signal-400" : "text-pulse-300"}>
                               {m.value}
                             </span>
-                            <span className="text-xs text-paper/40">{m.unit}</span>
+                            <span className="text-[10px] text-paper/40">{m.unit}</span>
                           </>
                         )}
                       </p>
-                      <div className="mt-2 h-1 overflow-hidden rounded-full bg-paper/10">
+                      <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-paper/10">
                         <div
                           className={`h-full rounded-full transition-all duration-700 ease-out ${
                             m.value !== null && m.value < 50 ? "bg-signal-400" : "bg-pulse-400"
@@ -358,11 +358,11 @@ export default function NeuroSurgerySection() {
                     </div>
                   ))}
 
-                  <div className="px-4 py-3.5">
-                    <p className="font-mono text-[9.5px] uppercase tracking-[0.18em] text-paper/40">
+                  <div className="px-3 py-2.5">
+                    <p className="font-mono text-[8.5px] uppercase tracking-[0.18em] text-paper/40">
                       dead units
                     </p>
-                    <p className="tnum mt-1.5 font-display text-xl font-semibold">
+                    <p className="tnum mt-1 font-display text-lg font-semibold">
                       {metrics.dead === null ? (
                         <span className="text-paper/30">—</span>
                       ) : (
@@ -371,16 +371,16 @@ export default function NeuroSurgerySection() {
                         </span>
                       )}
                     </p>
-                    <p className="mt-2 font-mono text-[9.5px] tracking-wide text-paper/35">
+                    <p className="mt-1.5 font-mono text-[8.5px] tracking-wide text-paper/35">
                       {metrics.dead === null ? "scan to inspect" : metrics.dead > 0 ? "l1·n3 silent" : "all firing"}
                     </p>
                   </div>
 
-                  <div className="px-4 py-3.5">
-                    <p className="font-mono text-[9.5px] uppercase tracking-[0.18em] text-paper/40">
+                  <div className="px-3 py-2.5">
+                    <p className="font-mono text-[8.5px] uppercase tracking-[0.18em] text-paper/40">
                       loss trend
                     </p>
-                    <svg viewBox="0 0 120 34" className="mt-2 h-8 w-full" aria-hidden>
+                    <svg viewBox="0 0 120 34" className="mt-1.5 h-7 w-full" aria-hidden>
                       <path
                         d="M2 22 C 30 20, 55 14, 80 9 S 112 4, 118 3"
                         fill="none"
@@ -406,7 +406,7 @@ export default function NeuroSurgerySection() {
                         style={{ transition: "opacity .5s ease" }}
                       />
                     </svg>
-                    <p className="font-mono text-[9.5px] tracking-wide text-paper/35">
+                    <p className="font-mono text-[8.5px] tracking-wide text-paper/35">
                       {showFaults ? "diverging" : healthy ? "converging" : "no data"}
                     </p>
                   </div>
@@ -418,35 +418,35 @@ export default function NeuroSurgerySection() {
           {/* copy */}
           <div className="order-1 lg:order-2 lg:col-span-5">
             <Reveal>
-              <Eyebrow className="text-signal-600">NeuroSurgery · Debug Lab</Eyebrow>
-              <h2 className="mt-5 font-display text-4xl font-semibold leading-[1.05] tracking-tight text-ink-900 sm:text-5xl">
+              <Eyebrow className="text-signal-600 text-sm">NeuroSurgery · Debug Lab</Eyebrow>
+              <h2 className="mt-3 font-display text-3xl font-semibold leading-[1.05] tracking-tight text-ink-900 sm:text-4xl">
                 Break an AI model.
                 <br />
                 Diagnose it. <span className="text-pulse-600">Fix it.</span>
               </h2>
             </Reveal>
             <Reveal delay={120}>
-              <p className="mt-6 text-lg leading-relaxed text-ink-600">
+              <p className="mt-4 text-base leading-relaxed text-ink-600">
                 NeuroSurgery turns machine-learning debugging into an interactive experience.
                 Diagnose overfitting, dead neurons, vanishing gradients, exploding gradients, poor
                 learning rates, and other model failures.
               </p>
             </Reveal>
             <Reveal delay={200}>
-              <div className="mt-7 flex flex-wrap gap-2">
+              <div className="mt-5 flex flex-wrap gap-1.5">
                 {NEUROSURGERY_FAULTS.map((f) => (
-                  <Tag key={f} tone="dark" className="hover:border-signal-500 hover:text-signal-600">
+                  <Tag key={f} tone="dark" className="hover:border-signal-500 hover:text-signal-600 text-xs">
                     {f}
                   </Tag>
                 ))}
               </div>
             </Reveal>
             <Reveal delay={280}>
-              <p className="mt-7 font-mono text-[11px] tracking-wide text-ink-400">
+              <p className="mt-5 font-mono text-[10px] tracking-wide text-ink-400">
                 focused on ML · deep learning · neural networks
               </p>
-              <div className="mt-6">
-                <ButtonLink to="/neurosurgery" variant="dark" arrow>
+              <div className="mt-5">
+                <ButtonLink to="/neurosurgery" variant="dark" arrow className="text-sm px-4 py-2">
                   Explore NeuroSurgery
                 </ButtonLink>
               </div>
