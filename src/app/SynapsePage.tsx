@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type DragEvent, type FormEvent } from "react";
+import { Link } from "react-router-dom";
 import { useSynapse, type SubmitOutcome, type UploadProgress } from "./SynapseProvider";
 import { INTAKE_CONFIG, formatBytes, parseArxivInput, validatePdfFile, type PdfCheck } from "./synapseCore";
 import { SYNAPSE_PIPELINE } from "./appData";
@@ -6,7 +7,7 @@ import { PageHeader, PanelHead } from "./states";
 import { Reveal } from "../ui";
 import { usePrefersReducedMotion } from "../hooks";
 import PipelineQueue from "./PipelineQueue";
-import { IconAlert, IconCheck, IconDoc, IconLink, IconUpload, IconX } from "../icons";
+import { IconAlert, IconArrowUpRight, IconCheck, IconDoc, IconLink, IconUpload, IconX } from "../icons";
 
 /* ================= validation checklist ================= */
 
