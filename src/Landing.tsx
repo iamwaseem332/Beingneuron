@@ -3,7 +3,7 @@ import { useLocation } from "react-router-dom";
 import Hero from "./Hero";
 import SynapseSection from "./SynapseSection";
 import NeuroSurgerySection from "./NeuroSurgerySection";
-import AlgorithmsLoopSection from "./AlgorithmsLoopSection";
+import ResearchLoopSection from "./ResearchLoopSection";
 import PricingPreview from "./PricingPreview";
 import { CTABand, HowItWorks, WhyBeingNeuron } from "./Sections";
 import { usePrefersReducedMotion } from "./hooks";
@@ -33,7 +33,7 @@ export default function Landing() {
         <SynapseSection />
         <NeuroSurgerySection />
       </div>
-      <AlgorithmsLoopSection />
+      <ResearchLoopSection />
       <HowItWorks />
       <WhyBeingNeuron />
       <PricingPreview />
