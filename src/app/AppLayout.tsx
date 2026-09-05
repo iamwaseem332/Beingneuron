@@ -383,7 +383,7 @@ export default function AppLayout() {
   }, [drawerOpen]);
 
   return (
-    <div className="min-h-screen bg-paper">
+    <div className="h-screen bg-paper">
       {/* desktop sidebar */}
       <aside className="fixed inset-y-0 left-0 z-50 hidden w-[248px] border-r border-paper/10 bg-ink-950 lg:block">
         <SidebarContent />
@@ -416,10 +416,10 @@ export default function AppLayout() {
         </div>
       )}
 
-      <div className="flex min-h-screen flex-col lg:pl-[248px]">
+      <div className="flex flex-col lg:pl-[248px]">
         <Header onMenu={() => setDrawerOpen(true)} />
 
-        <main id="workspace-main" className="relative flex-1">
+        <main id="workspace-main" className="relative flex-1 overflow-y-auto">
           {/* ambient workspace backdrop */}
           <div aria-hidden className="bg-grid-light pointer-events-none absolute inset-0 opacity-70" />
           <div
