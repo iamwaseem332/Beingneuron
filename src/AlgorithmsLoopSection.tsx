@@ -20,7 +20,7 @@ interface Algorithm {
   category: AlgorithmCategory;
   shortDescription: string;
   difficulty: "Beginner" | "Intermediate" | "Advanced";
-  visualType: "linear" | "binary" | "iterative" | "graph" | "gradient" | "network";
+  visualType: "linear" | "binary" | "iterative" | "graph" | "curve" | "network";
   route?: string;
 }
 
@@ -125,7 +125,7 @@ const ALGORITHMS: Algorithm[] = [
     category: "Optimization",
     shortDescription: "Iteratively move toward minimum by following negative gradient.",
     difficulty: "Intermediate",
-    visualType: "gradient",
+    visualType: "curve",
     route: "/algorithms/gradient-descent",
   },
   // Machine Learning
@@ -144,7 +144,7 @@ const ALGORITHMS: Algorithm[] = [
     category: "Machine Learning",
     shortDescription: "Fit a line to minimize squared error between predictions and targets.",
     difficulty: "Beginner",
-    visualType: "gradient",
+    visualType: "curve",
     route: "/algorithms/linear-regression",
   },
   {
@@ -153,7 +153,7 @@ const ALGORITHMS: Algorithm[] = [
     category: "Machine Learning",
     shortDescription: "Model binary outcomes using sigmoid function.",
     difficulty: "Intermediate",
-    visualType: "gradient",
+    visualType: "curve",
     route: "/algorithms/logistic-regression",
   },
   {
@@ -186,14 +186,14 @@ const ALGORITHMS: Algorithm[] = [
   },
 ];
 
-const CATEGORY_COLORS: Record<AlgorithmCategory, number> = {
-  Foundations: 0x5f7d92,
-  Search: 0x12a392,
-  Sorting: 0x35c4ae,
-  Graph: 0x7ce4d0,
-  Optimization: 0xecab42,
-  "Machine Learning": 0x12a392,
-  "Deep Learning": 0x0c8377,
+const CATEGORY_COLORS: Record<AlgorithmCategory, string> = {
+  Foundations: "#5f7d92",
+  Search: "#12a392",
+  Sorting: "#35c4ae",
+  Graph: "#7ce4d0",
+  Optimization: "#ecab42",
+  "Machine Learning": "#12a392",
+  "Deep Learning": "#0c8377",
 };
 
 /* ==================== VISUAL PREVIEW COMPONENT ==================== */
@@ -351,32 +351,49 @@ function AlgorithmVisual({
           break;
         }
 
-        case "gradient": {
-          // Gradient descent curve
+        case "curve": {
+          // Smooth curve fitting visualization (for regression/optimization)
+          ctx.strokeStyle = "rgba(95, 125, 146, 0.3)";
+          ctx.lineWidth = 1;
+          
+          // Draw data points
+          const points = [
+            { x: width * 0.15, y: height * 0.7 },
+            { x: width * 0.25, y: height * 0.55 },
+            { x: width * 0.35, y: height * 0.6 },
+            { x: width * 0.45, y: height * 0.4 },
+            { x: width * 0.55, y: height * 0.45 },
+            { x: width * 0.65, y: height * 0.3 },
+            { x: width * 0.75, y: height * 0.35 },
+            { x: width * 0.85, y: height * 0.2 },
+          ];
+          
+          points.forEach((p) => {
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+            ctx.fillStyle = "rgba(95, 125, 146, 0.6)";
+            ctx.fill();
+          });
+          
+          // Draw fitted curve
           ctx.strokeStyle = "#35c4ae";
           ctx.lineWidth = 2;
           ctx.beginPath();
           
-          for (let x = 10; x < width - 10; x++) {
-            const normalizedX = (x - 10) / (width - 20);
-            const y = 15 + Math.pow(normalizedX - 0.3, 2) * 40;
-            if (x === 10) {
+          for (let x = width * 0.1; x < width * 0.9; x += 2) {
+            const normalizedX = (x - width * 0.1) / (width * 0.8);
+            // Simple linear fit with slight oscillation
+            const baseY = height * 0.75 - normalizedX * height * 0.5;
+            const wave = reducedMotion ? 0 : Math.sin(t * 2 + normalizedX * Math.PI) * 3;
+            const y = baseY + wave;
+            
+            if (x === width * 0.1) {
               ctx.moveTo(x, y);
             } else {
               ctx.lineTo(x, y);
             }
           }
           ctx.stroke();
-
-          // Moving point
-          const pointX = reducedMotion ? width * 0.3 : 10 + ((t * 20) % (width - 20));
-          const normalizedX = (pointX - 10) / (width - 20);
-          const pointY = 15 + Math.pow(normalizedX - 0.3, 2) * 40;
-          
-          ctx.beginPath();
-          ctx.arc(pointX, pointY, 5, 0, Math.PI * 2);
-          ctx.fillStyle = "#f4a261";
-          ctx.fill();
           break;
         }
 
@@ -450,7 +467,7 @@ function AlgorithmVisual({
   );
 }
 
-/* ==================== ORBIT NODE ==================== */
+/* ==================== ORBIT NODE (VERTICAL) ==================== */
 
 interface OrbitNodeProps {
   algorithm: Algorithm;
@@ -458,9 +475,8 @@ interface OrbitNodeProps {
   total: number;
   isActive: boolean;
   isHovered: boolean;
-  angle: number;
-  radiusX: number;
-  radiusY: number;
+  yOffset: number;
+  depth: number;
   onSelect: (id: string) => void;
   onHover: (id: string | null) => void;
   reducedMotion: boolean;
@@ -472,35 +488,28 @@ function OrbitNode({
   total,
   isActive,
   isHovered,
-  angle,
-  radiusX,
-  radiusY,
+  yOffset,
+  depth,
   onSelect,
   onHover,
   reducedMotion,
 }: OrbitNodeProps) {
-  // Calculate position on elliptical orbit
-  const x = Math.cos(angle) * radiusX;
-  const y = Math.sin(angle) * radiusY;
-  
-  // Depth effect: scale based on z-position (simulated by y)
-  const depthFactor = 0.5 + 0.5 * Math.sin(angle + Math.PI / 2);
-  const scale = isActive ? 1.3 : isHovered ? 1.15 : 0.7 + 0.3 * depthFactor;
-  const opacity = isActive ? 1 : isHovered ? 0.9 : 0.5 + 0.4 * depthFactor;
+  // Scale and opacity based on depth (closer = larger, more visible)
+  const scale = isActive ? 1.4 : isHovered ? 1.2 : 0.6 + 0.4 * depth;
+  const opacity = isActive ? 1 : isHovered ? 0.95 : 0.35 + 0.55 * depth;
   
   const categoryColor = CATEGORY_COLORS[algorithm.category];
-  const hexColor = `#${categoryColor.toString(16).padStart(6, "0")}`;
 
   return (
     <button
       type="button"
-      className={`absolute flex items-center justify-center transition-all duration-500 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-pulse-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black rounded-full`}
+      className={`absolute flex items-center justify-center transition-all duration-700 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-pulse-400 focus-visible:ring-offset-2 focus-visible:ring-offset-black rounded-full`}
       style={{
-        left: `calc(50% + ${x}px)`,
-        top: `calc(50% + ${y}px)`,
+        left: `50%`,
+        top: `${yOffset}%`,
         transform: `translate(-50%, -50%) scale(${scale})`,
         opacity,
-        zIndex: isActive ? 50 : Math.floor(depthFactor * 10),
+        zIndex: isActive ? 50 : Math.floor(depth * 10),
       }}
       onClick={() => onSelect(algorithm.id)}
       onMouseEnter={() => onHover(algorithm.id)}
@@ -514,20 +523,20 @@ function OrbitNode({
       <div
         className={`relative flex items-center justify-center rounded-full border-2 transition-all duration-300 ${
           isActive
-            ? "h-14 w-14 border-pulse-400 bg-black shadow-[0_0_30px_rgba(53,196,174,0.4)]"
-            : "h-8 w-8 border-opacity-40 bg-black"
+            ? "h-16 w-16 border-[#35c4ae] bg-black shadow-[0_0_30px_rgba(53,196,174,0.4)]"
+            : "h-9 w-9 border-opacity-40 bg-black"
         }`}
         style={{
-          borderColor: isActive || isHovered ? hexColor : `rgba(95, 125, 146, 0.4)`,
+          borderColor: isActive || isHovered ? categoryColor : `rgba(95, 125, 146, 0.4)`,
         }}
       >
         {/* Inner dot */}
         <div
           className={`rounded-full transition-all duration-300 ${
-            isActive ? "h-4 w-4" : "h-2 w-2"
+            isActive ? "h-5 w-5" : "h-2.5 w-2.5"
           }`}
           style={{
-            backgroundColor: isActive || isHovered ? hexColor : "#5f7d92",
+            backgroundColor: isActive || isHovered ? categoryColor : "#5f7d92",
           }}
         />
         
@@ -538,9 +547,9 @@ function OrbitNode({
       </div>
       
       {/* Label - only show for active or hovered nodes, or nodes in front */}
-      {(isActive || isHovered || depthFactor > 0.7) && (
+      {(isActive || isHovered || depth > 0.6) && (
         <span
-          className={`absolute top-full mt-2 whitespace-nowrap font-mono text-[10px] tracking-wide transition-all duration-300 ${
+          className={`absolute left-full ml-3 whitespace-nowrap font-mono text-[10px] tracking-wide transition-all duration-300 ${
             isActive ? "text-pulse-300" : "text-paper/60"
           }`}
           style={{
@@ -563,7 +572,7 @@ export default function AlgorithmsLoopSection() {
   const [activeId, setActiveId] = useState<string>(ALGORITHMS[0].id);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [isPaused, setIsPaused] = useState(false);
-  const [rotationOffset, setRotationOffset] = useState(0);
+  const [scrollOffset, setScrollOffset] = useState(0);
   
   const activeIndex = useMemo(
     () => ALGORITHMS.findIndex((a) => a.id === activeId),
@@ -571,12 +580,12 @@ export default function AlgorithmsLoopSection() {
   );
   const activeAlgorithm = ALGORITHMS[activeIndex];
 
-  // Auto-rotation
+  // Auto-scroll for vertical loop
   useEffect(() => {
     if (reducedMotion || isPaused) return;
 
     const interval = setInterval(() => {
-      setRotationOffset((prev) => prev + 0.003);
+      setScrollOffset((prev) => prev + 0.15);
     }, 50);
 
     return () => clearInterval(interval);
@@ -585,12 +594,12 @@ export default function AlgorithmsLoopSection() {
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+      if (e.key === "ArrowUp") {
         e.preventDefault();
         const prevIndex = activeIndex === 0 ? ALGORITHMS.length - 1 : activeIndex - 1;
         setActiveId(ALGORITHMS[prevIndex].id);
         setIsPaused(true);
-      } else if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+      } else if (e.key === "ArrowDown") {
         e.preventDefault();
         const nextIndex = activeIndex === ALGORITHMS.length - 1 ? 0 : activeIndex + 1;
         setActiveId(ALGORITHMS[nextIndex].id);
@@ -631,16 +640,27 @@ export default function AlgorithmsLoopSection() {
     setIsPaused(true);
   }, [activeIndex]);
 
-  // Calculate node angles
-  const getNodeAngle = useCallback(
+  // Calculate node positions for vertical loop
+  const getNodePosition = useCallback(
     (index: number) => {
-      const baseAngle = (index / ALGORITHMS.length) * Math.PI * 2;
-      // Adjust so active node is at the front (bottom of ellipse)
-      const activeAngle = (activeIndex / ALGORITHMS.length) * Math.PI * 2;
-      const offset = -activeAngle + Math.PI / 2 + rotationOffset;
-      return baseAngle + offset;
+      const total = ALGORITHMS.length;
+      // Base position in the circular arrangement
+      const baseAngle = (index / total) * Math.PI * 2;
+      // Rotate so active algorithm is at center (50%)
+      const activeAngle = (activeIndex / total) * Math.PI * 2;
+      const rotation = -activeAngle + scrollOffset;
+      const finalAngle = baseAngle + rotation;
+      
+      // Map angle to vertical position (0-100%)
+      // sin(-PI/2) = -1 (top), sin(PI/2) = 1 (bottom)
+      const yOffset = 50 + Math.sin(finalAngle) * 42;
+      
+      // Depth based on how close to center (cos gives 1 at center, 0 at edges)
+      const depth = 0.5 + 0.5 * Math.cos(finalAngle);
+      
+      return { yOffset, depth };
     },
-    [activeIndex, rotationOffset]
+    [activeIndex, scrollOffset]
   );
 
   return (
@@ -651,11 +671,14 @@ export default function AlgorithmsLoopSection() {
       onMouseEnter={handleInteractionStart}
       onTouchStart={handleInteractionStart}
     >
-      {/* Background grid */}
-      <div className="bg-grid-dark absolute inset-0 opacity-70" />
+      {/* Subtle greenish-black background */}
+      <div className="absolute inset-0 bg-[#050a08]" />
       
-      {/* Subtle radial glow */}
-      <div className="absolute left-1/2 top-1/2 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgba(18,163,146,0.08),transparent_65%)]" />
+      {/* Background grid */}
+      <div className="bg-grid-dark absolute inset-0 opacity-50" />
+      
+      {/* Subtle vertical glow */}
+      <div className="absolute left-1/2 top-1/2 h-[700px] w-[400px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(ellipse,rgba(18,163,146,0.06),transparent_70%)]" />
 
       <div className="relative mx-auto max-w-7xl px-5 sm:px-8">
         {/* Section header */}
@@ -663,8 +686,8 @@ export default function AlgorithmsLoopSection() {
           <div className="mx-auto max-w-2xl text-center">
             <Eyebrow className="text-pulse-300">Algorithm Exploration</Eyebrow>
             <h2 className="mt-5 font-display text-3xl font-semibold leading-[1.06] tracking-tight text-paper sm:text-4xl lg:text-[2.75rem]">
-              Explore algorithms through an interactive{" "}
-              <span className="text-pulse-300">computational orbit</span>.
+              Explore algorithms through a{" "}
+              <span className="text-pulse-300">vertical knowledge stream</span>.
             </h2>
             <p className="mt-5 text-lg leading-relaxed text-paper/65">
               Navigate a continuous loop of fundamental algorithms—from search and sorting to
@@ -675,55 +698,51 @@ export default function AlgorithmsLoopSection() {
 
         {/* Main orbit visualization */}
         <Reveal delay={150}>
-          <div className="relative mt-16 h-[520px] sm:h-[600px] lg:h-[680px]">
-            {/* Orbit path */}
+          <div className="relative mt-16 h-[600px] sm:h-[700px] lg:h-[780px]">
+            {/* Vertical path line */}
             <svg
               className="absolute inset-0 h-full w-full"
-              viewBox="0 0 800 600"
+              viewBox="0 0 400 800"
               aria-hidden
             >
               <defs>
-                <ellipse
-                  id="orbit-path"
-                  cx="400"
-                  cy="300"
-                  rx="320"
-                  ry="220"
-                  fill="none"
-                  stroke="url(#orbit-gradient)"
-                  strokeWidth="1.5"
-                  strokeDasharray="4 8"
-                  opacity="0.3"
-                />
-                <linearGradient id="orbit-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#5f7d92" stopOpacity="0.2" />
-                  <stop offset="50%" stopColor="#35c4ae" stopOpacity="0.5" />
-                  <stop offset="100%" stopColor="#5f7d92" stopOpacity="0.2" />
+                <linearGradient id="path-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stopColor="#5f7d92" stopOpacity="0.1" />
+                  <stop offset="50%" stopColor="#35c4ae" stopOpacity="0.4" />
+                  <stop offset="100%" stopColor="#5f7d92" stopOpacity="0.1" />
                 </linearGradient>
               </defs>
-              <use href="#orbit-path" />
+              
+              {/* Main vertical path */}
+              <line
+                x1="200"
+                y1="0"
+                x2="200"
+                y2="800"
+                stroke="url(#path-gradient)"
+                strokeWidth="1.5"
+                strokeDasharray="4 8"
+                opacity="0.3"
+              />
               
               {/* Animated segment */}
               {!reducedMotion && (
-                <ellipse
-                  cx="400"
-                  cy="300"
-                  rx="320"
-                  ry="220"
-                  fill="none"
+                <line
+                  x1="200"
+                  y1={((scrollOffset * 2) % 800) - 100}
+                  x2="200"
+                  y2={((scrollOffset * 2) % 800) + 100}
                   stroke="#35c4ae"
                   strokeWidth="2"
-                  strokeDasharray="20 580"
-                  strokeDashoffset={-rotationOffset * 100}
                   opacity="0.6"
                 />
               )}
             </svg>
 
             {/* Algorithm nodes */}
-            <div className="absolute inset-0 flex items-center justify-center">
+            <div className="absolute inset-0">
               {ALGORITHMS.map((algo, index) => {
-                const angle = getNodeAngle(index);
+                const { yOffset, depth } = getNodePosition(index);
                 const isActive = algo.id === activeId;
                 const isHovered = algo.id === hoveredId;
                 
@@ -735,9 +754,8 @@ export default function AlgorithmsLoopSection() {
                     total={ALGORITHMS.length}
                     isActive={isActive}
                     isHovered={isHovered}
-                    angle={angle}
-                    radiusX={window.innerWidth >= 1024 ? 280 : window.innerWidth >= 640 ? 220 : 160}
-                    radiusY={window.innerWidth >= 1024 ? 190 : window.innerWidth >= 640 ? 150 : 110}
+                    yOffset={yOffset}
+                    depth={depth}
                     onSelect={handleSelect}
                     onHover={handleHover}
                     reducedMotion={reducedMotion}
@@ -754,8 +772,8 @@ export default function AlgorithmsLoopSection() {
                   <span
                     className="rounded-full border px-3 py-1 font-mono text-[10px] uppercase tracking-wider"
                     style={{
-                      borderColor: `rgba(${CATEGORY_COLORS[activeAlgorithm.category].toString(16)}, 0.5)`,
-                      color: `#${CATEGORY_COLORS[activeAlgorithm.category].toString(16).padStart(6, "0")}`,
+                      borderColor: `${CATEGORY_COLORS[activeAlgorithm.category]}66`,
+                      color: CATEGORY_COLORS[activeAlgorithm.category],
                     }}
                   >
                     {activeAlgorithm.category}
