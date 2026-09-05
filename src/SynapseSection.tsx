@@ -79,22 +79,22 @@ export default function SynapseSection() {
   const hotNode = NODES.find((n) => n.pid === active);
 
   return (
-    <section id="synapse" className="relative scroll-mt-20 overflow-hidden bg-paper py-16 lg:py-20">
+    <section id="synapse" className="relative scroll-mt-20 overflow-hidden bg-paper py-12 lg:py-14">
       <div className="bg-grid-light absolute inset-0 opacity-70" />
       <div className="absolute -left-52 top-10 h-[540px] w-[540px] rounded-full bg-[radial-gradient(circle,rgba(18,163,146,0.1),transparent_62%)]" />
 
       <div className="relative mx-auto max-w-7xl px-5 sm:px-8">
-        <div className="grid items-center gap-10 lg:grid-cols-12 lg:gap-12">
+        <div className="grid items-center gap-8 lg:grid-cols-12 lg:gap-10">
           {/* copy */}
           <div className="lg:col-span-5">
             <Reveal>
-              <Eyebrow className="text-pulse-600 text-sm">Synapse · Research Intelligence</Eyebrow>
-              <h2 className="mt-3 font-display text-3xl font-semibold leading-[1.05] tracking-tight text-ink-900 sm:text-4xl">
+              <Eyebrow className="text-pulse-600 text-xs">Synapse · Research Intelligence</Eyebrow>
+              <h2 className="mt-2 font-display text-2xl font-semibold leading-[1.05] tracking-tight text-ink-900 sm:text-3xl">
                 See how research ideas connect.
               </h2>
             </Reveal>
             <Reveal delay={120}>
-              <p className="mt-4 text-base leading-relaxed text-ink-600">
+              <p className="mt-3 text-sm leading-relaxed text-ink-600">
                 Upload a research paper and transform it into an interactive knowledge graph.
                 Explore concepts, relationships, claims, methodology, and evidence instead of
                 reading a paper as a wall of text.
@@ -102,24 +102,24 @@ export default function SynapseSection() {
             </Reveal>
 
             <Reveal delay={200}>
-              <div className="mt-5">
+              <div className="mt-4">
                 <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-ink-400">
                   Domain-agnostic — one engine, any field
                 </p>
-                <div className="mt-2.5 flex flex-wrap gap-1.5">
+                <div className="mt-2 flex flex-wrap gap-1.5">
                   {FIELDS.map((f) => (
-                    <Tag key={f} className="text-xs">{f}</Tag>
+                    <Tag key={f} className="text-[10px]">{f}</Tag>
                   ))}
                 </div>
               </div>
             </Reveal>
 
             <Reveal delay={280}>
-              <ul className="mt-5 space-y-2">
+              <ul className="mt-4 space-y-1.5">
                 {FACETS.map((f) => (
-                  <li key={f} className="flex items-center gap-2.5 text-[14px] text-ink-700">
-                    <span className="flex h-4 w-4 items-center justify-center rounded-full bg-pulse-100 text-pulse-600">
-                      <IconCheck size={11} />
+                  <li key={f} className="flex items-center gap-2 text-[12px] text-ink-700">
+                    <span className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-pulse-100 text-pulse-600">
+                      <IconCheck size={9} />
                     </span>
                     {f}
                   </li>
@@ -128,8 +128,8 @@ export default function SynapseSection() {
             </Reveal>
 
             <Reveal delay={360}>
-              <div className="mt-7">
-                <ButtonLink to="/synapse" variant="dark" arrow className="text-sm px-4 py-2">
+              <div className="mt-5">
+                <ButtonLink to="/synapse" variant="dark" arrow className="text-xs px-3.5 py-2">
                   Explore Synapse
                 </ButtonLink>
               </div>
@@ -139,21 +139,21 @@ export default function SynapseSection() {
           {/* interactive visual: paper ↔ graph */}
           <div className="lg:col-span-7">
             <Reveal delay={180}>
-              <div className="overflow-hidden rounded-lg border border-ink-900/12 bg-paper-card shadow-[0_20px_50px_-25px_rgba(6,15,24,0.35)]">
-                <div className="flex items-center justify-between border-b border-ink-900/10 px-3 py-2">
-                  <p className="font-mono text-[9.5px] tracking-[0.16em] text-ink-500">
+              <div className="overflow-hidden rounded-md border border-ink-900/12 bg-paper-card shadow-[0_20px_50px_-25px_rgba(6,15,24,0.35)]">
+                <div className="flex items-center justify-between border-b border-ink-900/10 px-2.5 py-1.5">
+                  <p className="font-mono text-[8.5px] tracking-[0.16em] text-ink-500">
                     SYNAPSE / ANALYSIS PREVIEW
                   </p>
-                  <Tag className="text-xs">neuroscience · illustrative</Tag>
+                  <Tag className="text-[10px]">neuroscience · illustrative</Tag>
                 </div>
 
                 <div className="grid md:grid-cols-5">
                   {/* source pane */}
-                  <div className="border-b border-ink-900/10 p-3 md:col-span-2 md:border-b-0 md:border-r">
-                    <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-ink-400">
+                  <div className="border-b border-ink-900/10 p-2.5 md:col-span-2 md:border-b-0 md:border-r">
+                    <p className="font-mono text-[8.5px] uppercase tracking-[0.2em] text-ink-400">
                       Source — excerpts
                     </p>
-                    <div className="mt-2 space-y-1.5">
+                    <div className="mt-1.5 space-y-1">
                       {PASSAGES.map((p) => (
                         <button
                           key={p.id}
@@ -161,13 +161,13 @@ export default function SynapseSection() {
                           onMouseEnter={() => setActive(p.id)}
                           onFocus={() => setActive(p.id)}
                           onClick={() => setActive(p.id)}
-                          className={`w-full rounded-md border-l-2 px-2.5 py-1.5 text-left text-[11.5px] leading-snug transition-all duration-300 ${
+                          className={`w-full rounded-sm border-l-2 px-2 py-1 text-left text-[10.5px] leading-snug transition-all duration-300 ${
                             active === p.id
                               ? "border-pulse-500 bg-pulse-100/80 text-ink-900"
                               : "border-transparent text-ink-500 hover:bg-ink-900/[0.04] hover:text-ink-700"
                           }`}
                         >
-                          <span className="mr-2 font-mono text-[9px] text-pulse-600">{p.sec}</span>
+                          <span className="mr-1.5 font-mono text-[8.5px] text-pulse-600">{p.sec}</span>
                           {p.text}
                         </button>
                       ))}
@@ -175,7 +175,7 @@ export default function SynapseSection() {
                   </div>
 
                   {/* graph pane */}
-                  <div className="relative p-2 md:col-span-3">
+                  <div className="relative p-1.5 md:col-span-3">
                     <svg viewBox="0 0 460 340" className="h-auto w-full" role="img" aria-label="Interactive knowledge graph preview">
                       <defs>
                         <pattern id="syn-grid" width="34" height="34" patternUnits="userSpaceOnUse">
@@ -214,28 +214,28 @@ export default function SynapseSection() {
                             style={{ cursor: "pointer" }}
                           >
                             <circle
-                              r={hot ? 24 : 19}
+                              r={hot ? 22 : 17}
                               fill={hot ? "var(--color-pulse-100)" : "var(--color-paper-card)"}
                               stroke={hot ? "var(--color-pulse-500)" : "rgba(11,26,38,0.22)"}
                               strokeWidth={hot ? 1.8 : 1.2}
                               style={{ transition: "all .3s ease" }}
                             />
-                            <circle r={hot ? 6 : 4.5} fill={hot ? "var(--color-pulse-500)" : "var(--color-ink-700)"} style={{ transition: "all .3s ease" }} />
+                            <circle r={hot ? 5.5 : 4} fill={hot ? "var(--color-pulse-500)" : "var(--color-ink-700)"} style={{ transition: "all .3s ease" }} />
                             <text
                               y="-28"
                               textAnchor="middle"
                               fontFamily="var(--font-mono)"
-                              fontSize="8.5"
+                              fontSize="8"
                               letterSpacing="1.6"
                               fill={hot ? "var(--color-pulse-600)" : "rgba(65,97,122,0.75)"}
                             >
                               {n.type}
                             </text>
                             <text
-                              y="38"
+                              y="36"
                               textAnchor="middle"
                               fontFamily="var(--font-mono)"
-                              fontSize="10"
+                              fontSize="9.5"
                               fill={hot ? "var(--color-ink-900)" : "rgba(65,97,122,0.9)"}
                             >
                               {n.label}
@@ -247,18 +247,18 @@ export default function SynapseSection() {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between border-t border-ink-900/10 px-3 py-2">
-                  <p className="font-mono text-[9px] tracking-wide text-ink-400">
+                <div className="flex items-center justify-between border-t border-ink-900/10 px-2.5 py-1.5">
+                  <p className="font-mono text-[8.5px] tracking-wide text-ink-400">
                     hover a node — the source passage highlights
                   </p>
-                  <p className="font-mono text-[9px] tracking-wide text-pulse-600">
+                  <p className="font-mono text-[8.5px] tracking-wide text-pulse-600">
                     evidence-linked 5/5
                   </p>
                 </div>
               </div>
             </Reveal>
             <Reveal delay={280}>
-              <p className="mt-3 font-mono text-[10px] tracking-wide text-ink-400">
+              <p className="mt-2.5 font-mono text-[9.5px] tracking-wide text-ink-400">
                 * Illustrative excerpt. Real analysis arrives with the Synapse engine — Phase 2.
               </p>
             </Reveal>
