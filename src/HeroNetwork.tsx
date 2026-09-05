@@ -99,7 +99,7 @@ export default function HeroNetwork() {
         <p className="font-mono text-[9px] text-paper/40">v0.1</p>
       </div>
 
-      <div className="relative">
+      <div className="relative -mt-6">
         <svg viewBox="0 0 640 420" className="h-auto w-full" role="img" aria-label="Preview of a research knowledge graph">
           <defs>
             <pattern id="hero-grid" width="40" height="40" patternUnits="userSpaceOnUse">
@@ -122,9 +122,9 @@ export default function HeroNetwork() {
               <g key={`${a}-${b}`}>
                 <line
                   x1={na.x}
-                  y1={na.y * 0.72 + 60}
+                  y1={na.y * 0.75 + 45}
                   x2={nb.x}
-                  y2={nb.y * 0.72 + 60}
+                  y2={nb.y * 0.75 + 45}
                   stroke={isHot ? "var(--color-pulse-400)" : "rgba(139,164,180,0.28)"}
                   strokeWidth={isHot ? 1.8 : 1}
                   className={isHot ? "edge-flow" : ""}
@@ -138,7 +138,7 @@ export default function HeroNetwork() {
           {!reduced &&
             pulses.map((p, i) => (
               <circle key={i} r="3" fill="var(--color-pulse-300)" opacity="0.9">
-                <animateMotion dur={p.dur} begin={p.begin} repeatCount="indefinite" path={p.path.replace(/(\d+) (\d+)/g, (_, x, y) => `${x} ${parseFloat(y) * 0.72 + 60}`)} />
+                <animateMotion dur={p.dur} begin={p.begin} repeatCount="indefinite" path={p.path.replace(/(\d+) (\d+)/g, (_, x, y) => `${x} ${parseFloat(y) * 0.75 + 45}`)} />
               </circle>
             ))}
 
@@ -150,7 +150,7 @@ export default function HeroNetwork() {
             return (
               <g
                 key={n.id}
-                transform={`translate(${n.x} ${n.y * 0.72 + 60})`}
+                transform={`translate(${n.x} ${n.y * 0.75 + 45})`}
                 onMouseEnter={() => setHovered(n.id)}
                 onMouseLeave={() => setHovered(null)}
                 style={{ cursor: "pointer" }}
