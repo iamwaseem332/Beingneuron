@@ -223,140 +223,201 @@ function AlgorithmVisual({
 
     const animate = () => {
       if (!reducedMotion) {
-        timeRef.current += 0.02;
+        timeRef.current += 0.03;
       }
 
-      ctx.clearRect(0, 0, width, height);
-      ctx.fillStyle = "rgba(11, 26, 38, 0.3)";
+      // Fade effect for trails
+      ctx.fillStyle = "rgba(5, 10, 8, 0.15)";
       ctx.fillRect(0, 0, width, height);
 
       const t = timeRef.current;
 
       switch (visualType) {
         case "linear": {
-          // Simple scanning line
-          const barCount = 8;
-          const barWidth = width / barCount - 4;
-          const scanPos = reducedMotion ? width / 2 : ((t * 30) % width);
+          const barCount = 10;
+          const barWidth = (width - barCount * 3) / barCount;
+          const scanProgress = reducedMotion ? 0.5 : (t * 0.3) % 1;
           
           for (let i = 0; i < barCount; i++) {
-            const x = i * (barWidth + 4) + 2;
-            const isScanned = x < scanPos;
-            ctx.fillStyle = isScanned ? "#35c4ae" : "rgba(95, 125, 146, 0.4)";
-            ctx.fillRect(x, height / 2 - 15, barWidth, 30);
+            const x = i * (barWidth + 3) + 2;
+            const progress = i / barCount;
+            const isScanned = progress < scanProgress;
+            const intensity = isScanned ? Math.max(0, 1 - (scanProgress - progress) * 4) : 0.2;
+            
+            const gradient = ctx.createLinearGradient(x, height/2 - 12, x, height/2 + 12);
+            gradient.addColorStop(0, `rgba(53, 196, 174, ${intensity * 0.8})`);
+            gradient.addColorStop(1, `rgba(18, 163, 146, ${intensity})`);
+            
+            ctx.fillStyle = gradient;
+            const barHeight = 8 + intensity * 16;
+            ctx.fillRect(x, height/2 - barHeight/2, barWidth, barHeight);
           }
           
-          // Scan indicator
-          ctx.strokeStyle = "#12a392";
+          // Scanner line with glow
+          const scanX = 2 + scanProgress * (width - 4);
+          ctx.shadowColor = "#35c4ae";
+          ctx.shadowBlur = 8;
+          ctx.strokeStyle = "#35c4ae";
           ctx.lineWidth = 2;
           ctx.beginPath();
-          ctx.moveTo(scanPos, 10);
-          ctx.lineTo(scanPos, height - 10);
+          ctx.moveTo(scanX, 5);
+          ctx.lineTo(scanX, height - 5);
           ctx.stroke();
+          ctx.shadowBlur = 0;
           break;
         }
 
         case "binary": {
-          // Binary tree visualization
-          const levels = 3;
-          const nodeRadius = 6;
+          const levels = 4;
+          const nodeRadius = 5;
           
-          const drawNode = (x: number, y: number, level: number, active: boolean) => {
+          const drawNode = (x: number, y: number, level: number, active: boolean, pulse: number) => {
+            if (active && !reducedMotion) {
+              ctx.shadowColor = "#35c4ae";
+              ctx.shadowBlur = 10;
+            }
             ctx.beginPath();
-            ctx.arc(x, y, nodeRadius, 0, Math.PI * 2);
-            ctx.fillStyle = active ? "#35c4ae" : "rgba(95, 125, 146, 0.5)";
+            ctx.arc(x, y, nodeRadius + pulse, 0, Math.PI * 2);
+            const gradient = ctx.createRadialGradient(x, y, 0, x, y, nodeRadius + pulse);
+            gradient.addColorStop(0, active ? "#7ce4d0" : "rgba(95, 125, 146, 0.8)");
+            gradient.addColorStop(1, active ? "#35c4ae" : "rgba(59, 85, 105, 0.6)");
+            ctx.fillStyle = gradient;
             ctx.fill();
+            ctx.shadowBlur = 0;
           };
 
           const positions = [
-            { x: width / 2, y: 25, level: 0 },
-            { x: width / 4, y: 45, level: 1 },
-            { x: (width * 3) / 4, y: 45, level: 1 },
+            { x: width / 2, y: 18, level: 0 },
+            { x: width / 4, y: 32, level: 1 },
+            { x: (width * 3) / 4, y: 32, level: 1 },
+            { x: width / 8, y: 48, level: 2 },
+            { x: (width * 3) / 8, y: 48, level: 2 },
+            { x: (width * 5) / 8, y: 48, level: 2 },
+            { x: (width * 7) / 8, y: 48, level: 2 },
           ];
 
-          // Draw connections
-          ctx.strokeStyle = "rgba(95, 125, 146, 0.3)";
+          // Draw connections with fade
+          ctx.strokeStyle = "rgba(53, 196, 174, 0.2)";
           ctx.lineWidth = 1;
-          ctx.beginPath();
-          ctx.moveTo(width / 2, 25);
-          ctx.lineTo(width / 4, 45);
-          ctx.moveTo(width / 2, 25);
-          ctx.lineTo((width * 3) / 4, 45);
-          ctx.stroke();
+          const connections = [[0, 1], [0, 2], [1, 3], [1, 4], [2, 5], [2, 6]];
+          
+          connections.forEach(([a, b], i) => {
+            const isActive = reducedMotion ? false : Math.sin(t * 2 + i) > 0.7;
+            if (isActive) {
+              ctx.strokeStyle = "rgba(53, 196, 174, 0.5)";
+              ctx.lineWidth = 1.5;
+            } else {
+              ctx.strokeStyle = "rgba(53, 196, 174, 0.15)";
+              ctx.lineWidth = 1;
+            }
+            ctx.beginPath();
+            ctx.moveTo(positions[a].x, positions[a].y);
+            ctx.lineTo(positions[b].x, positions[b].y);
+            ctx.stroke();
+          });
 
-          // Highlight active path
-          const activeIndex = reducedMotion ? 0 : Math.floor(t * 2) % 3;
+          // Highlight active path with wave
+          const activeIndex = reducedMotion ? 0 : Math.floor(t * 3) % positions.length;
           positions.forEach((pos, i) => {
-            drawNode(pos.x, pos.y, pos.level, i === activeIndex);
+            const pulse = reducedMotion ? 0 : Math.sin(t * 6 + i) * 1.5;
+            drawNode(pos.x, pos.y, pos.level, i === activeIndex, Math.max(0, pulse));
           });
           break;
         }
 
         case "iterative": {
-          // Bars being sorted
-          const barCount = 6;
+          const barCount = 8;
           const barWidth = (width - barCount * 2) / barCount;
           
           for (let i = 0; i < barCount; i++) {
-            const baseHeight = 15 + i * 8;
-            const variation = reducedMotion ? 0 : Math.sin(t * 3 + i * 1.5) * 5;
-            const height = baseHeight + variation;
+            const baseHeight = 12 + (i % 4) * 6;
+            const wave = reducedMotion ? 0 : Math.sin(t * 4 + i * 1.2) * 6;
+            const height = baseHeight + wave;
             
-            const hue = i / barCount;
-            ctx.fillStyle = `hsla(${180 + hue * 40}, 70%, ${45 + variation}%, 0.8)`;
-            ctx.fillRect(i * (barWidth + 2) + 1, height - 10, barWidth, height);
+            const hueShift = (t * 20 + i * 30) % 60;
+            const gradient = ctx.createLinearGradient(0, height - 8, 0, height + 8);
+            gradient.addColorStop(0, `hsla(${175 + hueShift}, 75%, 55%, 0.9)`);
+            gradient.addColorStop(1, `hsla(${165 + hueShift}, 70%, 40%, 0.8)`);
+            
+            ctx.fillStyle = gradient;
+            ctx.fillRect(i * (barWidth + 2) + 1, height - 8, barWidth, height);
+            
+            // Top highlight
+            ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+            ctx.fillRect(i * (barWidth + 2) + 1, height - 8, barWidth, 2);
           }
           break;
         }
 
         case "graph": {
-          // Network nodes
           const nodes = [
-            { x: width * 0.3, y: height * 0.3 },
-            { x: width * 0.7, y: height * 0.25 },
-            { x: width * 0.5, y: height * 0.55 },
+            { x: width * 0.3, y: height * 0.25 },
+            { x: width * 0.7, y: height * 0.2 },
+            { x: width * 0.5, y: height * 0.45 },
             { x: width * 0.25, y: height * 0.7 },
-            { x: width * 0.75, y: height * 0.7 },
+            { x: width * 0.75, y: height * 0.75 },
           ];
 
-          // Draw edges
-          ctx.strokeStyle = "rgba(95, 125, 146, 0.3)";
-          ctx.lineWidth = 1;
+          // Animated edges with flow effect
           const edges = [[0, 1], [0, 2], [1, 2], [2, 3], [2, 4], [3, 4]];
           
-          edges.forEach(([a, b]) => {
+          edges.forEach(([a, b], edgeIndex) => {
+            const flowOffset = reducedMotion ? 0 : (t * 20 + edgeIndex * 30) % 100;
+            const flowProgress = flowOffset / 100;
+            
+            // Draw edge base
+            ctx.strokeStyle = "rgba(53, 196, 174, 0.15)";
+            ctx.lineWidth = 1.5;
             ctx.beginPath();
             ctx.moveTo(nodes[a].x, nodes[a].y);
             ctx.lineTo(nodes[b].x, nodes[b].y);
             ctx.stroke();
+            
+            // Draw flowing particle
+            if (!reducedMotion) {
+              const px = nodes[a].x + (nodes[b].x - nodes[a].x) * flowProgress;
+              const py = nodes[a].y + (nodes[b].y - nodes[a].y) * flowProgress;
+              
+              ctx.shadowColor = "#35c4ae";
+              ctx.shadowBlur = 6;
+              ctx.fillStyle = "#7ce4d0";
+              ctx.beginPath();
+              ctx.arc(px, py, 2.5, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.shadowBlur = 0;
+            }
           });
 
-          // Draw nodes with pulse effect
+          // Draw nodes with pulse
           const activeNode = reducedMotion ? 2 : Math.floor(t * 1.5) % nodes.length;
           nodes.forEach((node, i) => {
             const isActive = i === activeNode;
-            ctx.beginPath();
-            ctx.arc(node.x, node.y, isActive ? 8 : 5, 0, Math.PI * 2);
-            ctx.fillStyle = isActive ? "#35c4ae" : "rgba(95, 125, 146, 0.5)";
-            ctx.fill();
+            const pulse = reducedMotion ? 0 : Math.sin(t * 5) * 3;
             
-            if (isActive && !reducedMotion) {
-              ctx.strokeStyle = "rgba(53, 196, 174, 0.4)";
+            // Outer glow ring
+            if (isActive) {
+              ctx.strokeStyle = `rgba(53, 196, 174, ${0.3 + Math.sin(t * 4) * 0.2})`;
               ctx.lineWidth = 2;
               ctx.beginPath();
-              ctx.arc(node.x, node.y, 12 + Math.sin(t * 4) * 2, 0, Math.PI * 2);
+              ctx.arc(node.x, node.y, 10 + pulse, 0, Math.PI * 2);
               ctx.stroke();
             }
+            
+            // Node core
+            const gradient = ctx.createRadialGradient(node.x, node.y, 0, node.x, node.y, 8);
+            gradient.addColorStop(0, isActive ? "#7ce4d0" : "rgba(95, 125, 146, 0.7)");
+            gradient.addColorStop(1, isActive ? "#12a392" : "rgba(59, 85, 105, 0.5)");
+            
+            ctx.beginPath();
+            ctx.arc(node.x, node.y, isActive ? 7 : 5, 0, Math.PI * 2);
+            ctx.fillStyle = gradient;
+            ctx.fill();
           });
           break;
         }
 
         case "curve": {
-          // Smooth curve fitting visualization (for regression/optimization)
-          ctx.strokeStyle = "rgba(95, 125, 146, 0.3)";
-          ctx.lineWidth = 1;
-          
-          // Draw data points
+          // Data points with subtle glow
           const points = [
             { x: width * 0.15, y: height * 0.7 },
             { x: width * 0.25, y: height * 0.55 },
@@ -368,23 +429,32 @@ function AlgorithmVisual({
             { x: width * 0.85, y: height * 0.2 },
           ];
           
-          points.forEach((p) => {
+          points.forEach((p, i) => {
+            const pulse = reducedMotion ? 0 : Math.sin(t * 3 + i) * 1.5;
+            ctx.shadowColor = "rgba(53, 196, 174, 0.5)";
+            ctx.shadowBlur = 4;
             ctx.beginPath();
-            ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
-            ctx.fillStyle = "rgba(95, 125, 146, 0.6)";
+            ctx.arc(p.x, p.y, 4 + pulse, 0, Math.PI * 2);
+            const gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, 4 + pulse);
+            gradient.addColorStop(0, "#7ce4d0");
+            gradient.addColorStop(1, "#12a392");
+            ctx.fillStyle = gradient;
             ctx.fill();
           });
+          ctx.shadowBlur = 0;
           
-          // Draw fitted curve
+          // Animated fitted curve
           ctx.strokeStyle = "#35c4ae";
-          ctx.lineWidth = 2;
+          ctx.lineWidth = 2.5;
+          ctx.lineCap = "round";
+          ctx.shadowColor = "rgba(53, 196, 174, 0.4)";
+          ctx.shadowBlur = 8;
           ctx.beginPath();
           
           for (let x = width * 0.1; x < width * 0.9; x += 2) {
             const normalizedX = (x - width * 0.1) / (width * 0.8);
-            // Simple linear fit with slight oscillation
             const baseY = height * 0.75 - normalizedX * height * 0.5;
-            const wave = reducedMotion ? 0 : Math.sin(t * 2 + normalizedX * Math.PI) * 3;
+            const wave = reducedMotion ? 0 : Math.sin(t * 3 + normalizedX * Math.PI * 2) * 4;
             const y = baseY + wave;
             
             if (x === width * 0.1) {
@@ -394,51 +464,81 @@ function AlgorithmVisual({
             }
           }
           ctx.stroke();
+          ctx.shadowBlur = 0;
           break;
         }
 
         case "network": {
-          // Neural network layers
-          const layers = [3, 4, 2];
+          const layers = [3, 4, 3, 2];
           const layerSpacing = width / (layers.length + 1);
+          
+          // Store neuron positions for connections
+          const neuronPositions: {x: number, y: number}[][] = [];
           
           layers.forEach((neuronCount, layerIndex) => {
             const x = layerSpacing * (layerIndex + 1);
             const neuronSpacing = height / (neuronCount + 1);
+            const layerNeurons: {x: number, y: number}[] = [];
             
             for (let i = 0; i < neuronCount; i++) {
               const y = neuronSpacing * (i + 1);
-              const isNeuronActive = isActive && !reducedMotion && Math.sin(t * 5 + layerIndex + i) > 0.5;
+              layerNeurons.push({x, y});
+              
+              const activation = isActive && !reducedMotion 
+                ? Math.sin(t * 4 + layerIndex * 2 + i) 
+                : 0;
+              const isFiring = activation > 0.6;
+              
+              // Neuron glow
+              if (isFiring) {
+                ctx.shadowColor = "#35c4ae";
+                ctx.shadowBlur = 8;
+              }
+              
+              const gradient = ctx.createRadialGradient(x, y, 0, x, y, 6);
+              gradient.addColorStop(0, isFiring ? "#7ce4d0" : "rgba(95, 125, 146, 0.6)");
+              gradient.addColorStop(1, isFiring ? "#12a392" : "rgba(59, 85, 105, 0.4)");
               
               ctx.beginPath();
-              ctx.arc(x, y, isNeuronActive ? 6 : 4, 0, Math.PI * 2);
-              ctx.fillStyle = isNeuronActive ? "#35c4ae" : "rgba(95, 125, 146, 0.6)";
+              ctx.arc(x, y, isFiring ? 5 : 4, 0, Math.PI * 2);
+              ctx.fillStyle = gradient;
               ctx.fill();
+              ctx.shadowBlur = 0;
             }
+            neuronPositions.push(layerNeurons);
           });
 
-          // Connections
-          ctx.strokeStyle = "rgba(95, 125, 146, 0.2)";
-          ctx.lineWidth = 1;
-          let prevX = layerSpacing;
-          let prevCount = layers[0];
-          
-          for (let l = 1; l < layers.length; l++) {
-            const currX = layerSpacing * (l + 1);
-            const currCount = layers[l];
-            const prevSpacing = height / (prevCount + 1);
-            const currSpacing = height / (currCount + 1);
+          // Animated connections
+          for (let l = 0; l < layers.length - 1; l++) {
+            const prevLayer = neuronPositions[l];
+            const currLayer = neuronPositions[l + 1];
             
-            for (let i = 0; i < prevCount; i++) {
-              for (let j = 0; j < currCount; j++) {
+            prevLayer.forEach((prev, i) => {
+              currLayer.forEach((curr, j) => {
+                const activation = isActive && !reducedMotion
+                  ? Math.sin(t * 5 + i + j * 0.5) * 0.5 + 0.5
+                  : 0.2;
+                
+                ctx.strokeStyle = `rgba(53, 196, 174, ${activation * 0.3})`;
+                ctx.lineWidth = activation * 1.5;
                 ctx.beginPath();
-                ctx.moveTo(prevX, prevSpacing * (i + 1));
-                ctx.lineTo(currX, currSpacing * (j + 1));
+                ctx.moveTo(prev.x, prev.y);
+                ctx.lineTo(curr.x, curr.y);
                 ctx.stroke();
-              }
-            }
-            prevX = currX;
-            prevCount = currCount;
+                
+                // Signal particles
+                if (activation > 0.7 && !reducedMotion) {
+                  const signalT = (t * 30 + i * 10 + j * 5) % 100 / 100;
+                  const sx = prev.x + (curr.x - prev.x) * signalT;
+                  const sy = prev.y + (curr.y - prev.y) * signalT;
+                  
+                  ctx.fillStyle = "#7ce4d0";
+                  ctx.beginPath();
+                  ctx.arc(sx, sy, 1.5, 0, Math.PI * 2);
+                  ctx.fill();
+                }
+              });
+            });
           }
           break;
         }
@@ -495,8 +595,8 @@ function OrbitNode({
   reducedMotion,
 }: OrbitNodeProps) {
   // Scale and opacity based on depth (closer = larger, more visible)
-  const scale = isActive ? 1.4 : isHovered ? 1.2 : 0.6 + 0.4 * depth;
-  const opacity = isActive ? 1 : isHovered ? 0.95 : 0.35 + 0.55 * depth;
+  const scale = isActive ? 1.2 : isHovered ? 1.1 : 0.5 + 0.5 * depth;
+  const opacity = isActive ? 1 : isHovered ? 0.95 : 0.3 + 0.6 * depth;
   
   const categoryColor = CATEGORY_COLORS[algorithm.category];
 
@@ -523,8 +623,8 @@ function OrbitNode({
       <div
         className={`relative flex items-center justify-center rounded-full border-2 transition-all duration-300 ${
           isActive
-            ? "h-16 w-16 border-[#35c4ae] bg-black shadow-[0_0_30px_rgba(53,196,174,0.4)]"
-            : "h-9 w-9 border-opacity-40 bg-black"
+            ? "h-12 w-12 border-[#35c4ae] bg-black shadow-[0_0_20px_rgba(53,196,174,0.4)]"
+            : "h-7 w-7 border-opacity-40 bg-black"
         }`}
         style={{
           borderColor: isActive || isHovered ? categoryColor : `rgba(95, 125, 146, 0.4)`,
@@ -533,7 +633,7 @@ function OrbitNode({
         {/* Inner dot */}
         <div
           className={`rounded-full transition-all duration-300 ${
-            isActive ? "h-5 w-5" : "h-2.5 w-2.5"
+            isActive ? "h-4 w-4" : "h-2 w-2"
           }`}
           style={{
             backgroundColor: isActive || isHovered ? categoryColor : "#5f7d92",
@@ -549,7 +649,7 @@ function OrbitNode({
       {/* Label - only show for active or hovered nodes, or nodes in front */}
       {(isActive || isHovered || depth > 0.6) && (
         <span
-          className={`absolute left-full ml-3 whitespace-nowrap font-mono text-[10px] tracking-wide transition-all duration-300 ${
+          className={`absolute left-full ml-2 whitespace-nowrap font-mono text-[8px] tracking-wide transition-all duration-300 ${
             isActive ? "text-pulse-300" : "text-paper/60"
           }`}
           style={{
@@ -666,7 +766,7 @@ export default function AlgorithmsLoopSection() {
   return (
     <section
       id="algorithms-loop"
-      className="relative scroll-mt-20 overflow-hidden bg-black py-24 text-paper lg:py-32"
+      className="relative scroll-mt-20 overflow-hidden bg-black py-16 text-paper lg:py-24"
       ref={containerRef}
       onMouseEnter={handleInteractionStart}
       onTouchStart={handleInteractionStart}
@@ -678,18 +778,18 @@ export default function AlgorithmsLoopSection() {
       <div className="bg-grid-dark absolute inset-0 opacity-50" />
       
       {/* Subtle vertical glow */}
-      <div className="absolute left-1/2 top-1/2 h-[700px] w-[400px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(ellipse,rgba(18,163,146,0.06),transparent_70%)]" />
+      <div className="absolute left-1/2 top-1/2 h-[500px] w-[300px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(ellipse,rgba(18,163,146,0.06),transparent_70%)]" />
 
       <div className="relative mx-auto max-w-7xl px-5 sm:px-8">
         {/* Section header */}
         <Reveal>
           <div className="mx-auto max-w-2xl text-center">
             <Eyebrow className="text-pulse-300">Algorithm Exploration</Eyebrow>
-            <h2 className="mt-5 font-display text-3xl font-semibold leading-[1.06] tracking-tight text-paper sm:text-4xl lg:text-[2.75rem]">
+            <h2 className="mt-4 font-display text-2xl font-semibold leading-[1.06] tracking-tight text-paper sm:text-3xl lg:text-[2rem]">
               Explore algorithms through a{" "}
               <span className="text-pulse-300">vertical knowledge stream</span>.
             </h2>
-            <p className="mt-5 text-lg leading-relaxed text-paper/65">
+            <p className="mt-4 text-base leading-relaxed text-paper/65">
               Navigate a continuous loop of fundamental algorithms—from search and sorting to
               machine learning and deep learning. Each node represents a pathway into computational thinking.
             </p>
@@ -698,7 +798,7 @@ export default function AlgorithmsLoopSection() {
 
         {/* Main orbit visualization */}
         <Reveal delay={150}>
-          <div className="relative mt-16 h-[600px] sm:h-[700px] lg:h-[780px]">
+          <div className="relative mt-12 h-[450px] sm:h-[500px] lg:h-[550px]">
             {/* Vertical path line */}
             <svg
               className="absolute inset-0 h-full w-full"
@@ -766,11 +866,11 @@ export default function AlgorithmsLoopSection() {
 
             {/* Center info panel */}
             <Reveal delay={250}>
-              <div className="absolute left-1/2 top-1/2 h-auto w-full max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-xl border border-ink-800 bg-black/80 p-6 backdrop-blur-sm">
+              <div className="absolute left-1/2 top-1/2 h-auto w-full max-w-xs -translate-x-1/2 -translate-y-1/2 rounded-lg border border-ink-800 bg-black/80 p-4 backdrop-blur-sm">
                 {/* Category badge */}
                 <div className="flex items-center justify-between">
                   <span
-                    className="rounded-full border px-3 py-1 font-mono text-[10px] uppercase tracking-wider"
+                    className="rounded-full border px-2.5 py-0.5 font-mono text-[9px] uppercase tracking-wider"
                     style={{
                       borderColor: `${CATEGORY_COLORS[activeAlgorithm.category]}66`,
                       color: CATEGORY_COLORS[activeAlgorithm.category],
@@ -780,24 +880,24 @@ export default function AlgorithmsLoopSection() {
                   </span>
                   
                   {/* Difficulty indicator */}
-                  <span className="font-mono text-[10px] text-paper/50">
+                  <span className="font-mono text-[9px] text-paper/50">
                     {activeAlgorithm.difficulty}
                   </span>
                 </div>
 
                 {/* Algorithm name */}
-                <h3 className="mt-4 font-display text-2xl font-semibold tracking-tight text-paper">
+                <h3 className="mt-3 font-display text-xl font-semibold tracking-tight text-paper">
                   {activeAlgorithm.name}
                 </h3>
 
                 {/* Description */}
-                <p className="mt-3 text-sm leading-relaxed text-paper/70">
+                <p className="mt-2 text-xs leading-relaxed text-paper/70">
                   {activeAlgorithm.shortDescription}
                 </p>
 
                 {/* Visual preview */}
-                <div className="mt-4 overflow-hidden rounded-lg border border-ink-800 bg-ink-950/50">
-                  <div className="h-20 w-full">
+                <div className="mt-3 overflow-hidden rounded-md border border-ink-800 bg-ink-950/50">
+                  <div className="h-16 w-full">
                     <AlgorithmVisual
                       visualType={activeAlgorithm.visualType}
                       isActive={true}
@@ -807,12 +907,12 @@ export default function AlgorithmsLoopSection() {
                 </div>
 
                 {/* Action button */}
-                <div className="mt-5">
+                <div className="mt-4">
                   {activeAlgorithm.route ? (
                     <ButtonLink
                       to={activeAlgorithm.route}
                       variant="primary"
-                      className="w-full"
+                      className="w-full py-2.5 text-sm"
                       arrow
                     >
                       Explore Algorithm
@@ -820,12 +920,12 @@ export default function AlgorithmsLoopSection() {
                   ) : (
                     <button
                       type="button"
-                      className="group inline-flex w-full items-center justify-center gap-2.5 rounded-full border border-pulse-500/50 bg-pulse-500 px-6 py-3 font-display text-[15px] font-semibold tracking-tight text-ink-950 transition-all duration-300 hover:bg-pulse-400 active:scale-[0.98]"
+                      className="group inline-flex w-full items-center justify-center gap-2 rounded-full border border-pulse-500/50 bg-pulse-500 px-5 py-2.5 font-display text-sm font-semibold tracking-tight text-ink-950 transition-all duration-300 hover:bg-pulse-400 active:scale-[0.98]"
                       disabled
                     >
                       Coming Soon
                       <IconArrowRight
-                        size={17}
+                        size={15}
                         className="transition-transform duration-300 group-hover:translate-x-1"
                       />
                     </button>
@@ -835,20 +935,20 @@ export default function AlgorithmsLoopSection() {
             </Reveal>
 
             {/* Navigation controls */}
-            <div className="absolute bottom-0 left-1/2 flex -translate-x-1/2 items-center gap-3">
+            <div className="absolute bottom-0 left-1/2 flex -translate-x-1/2 items-center gap-2">
               <button
                 type="button"
                 onClick={goToPrevious}
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-paper/20 text-paper/70 transition-colors hover:border-pulse-400 hover:text-pulse-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-pulse-400"
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-paper/20 text-paper/70 transition-colors hover:border-pulse-400 hover:text-pulse-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-pulse-400"
                 aria-label="Previous algorithm"
               >
-                <IconChevron size={20} className="rotate-90" />
+                <IconChevron size={16} className="rotate-90" />
               </button>
               
               <button
                 type="button"
                 onClick={() => setIsPaused((p) => !p)}
-                className="flex h-10 items-center justify-center rounded-full border border-paper/20 px-4 font-mono text-[10px] uppercase tracking-wider text-paper/70 transition-colors hover:border-pulse-400 hover:text-pulse-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-pulse-400"
+                className="flex h-8 items-center justify-center rounded-full border border-paper/20 px-3 font-mono text-[9px] uppercase tracking-wider text-paper/70 transition-colors hover:border-pulse-400 hover:text-pulse-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-pulse-400"
                 aria-label={isPaused ? "Resume auto-rotation" : "Pause auto-rotation"}
               >
                 {isPaused ? "Play" : "Pause"}
@@ -857,10 +957,10 @@ export default function AlgorithmsLoopSection() {
               <button
                 type="button"
                 onClick={goToNext}
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-paper/20 text-paper/70 transition-colors hover:border-pulse-400 hover:text-pulse-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-pulse-400"
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-paper/20 text-paper/70 transition-colors hover:border-pulse-400 hover:text-pulse-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-pulse-400"
                 aria-label="Next algorithm"
               >
-                <IconChevron size={20} className="-rotate-90" />
+                <IconChevron size={16} className="-rotate-90" />
               </button>
             </div>
           </div>
@@ -868,7 +968,7 @@ export default function AlgorithmsLoopSection() {
 
         {/* Keyboard hint */}
         <Reveal delay={350}>
-          <p className="mt-8 text-center font-mono text-[10.5px] tracking-wide text-paper/40">
+          <p className="mt-6 text-center font-mono text-[9px] tracking-wide text-paper/40">
             Use arrow keys to navigate · Space to pause
           </p>
         </Reveal>
