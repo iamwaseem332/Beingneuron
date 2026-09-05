@@ -105,8 +105,8 @@ export default function HeroNetwork() {
             <pattern id="hero-grid" width="40" height="40" patternUnits="userSpaceOnUse">
               <path d="M40 0H0v40" fill="none" stroke="rgba(242,244,239,0.045)" strokeWidth="1" />
             </pattern>
-            <radialGradient id="hero-glow" cx="50%" cy="42%" r="60%">
-              <stop offset="0%" stopColor="rgba(18,163,146,0.16)" />
+            <radialGradient id="hero-glow" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor="rgba(18,163,146,0.12)" />
               <stop offset="100%" stopColor="rgba(18,163,146,0)" />
             </radialGradient>
           </defs>
@@ -122,9 +122,9 @@ export default function HeroNetwork() {
               <g key={`${a}-${b}`}>
                 <line
                   x1={na.x}
-                  y1={na.y * 0.85 + 40}
+                  y1={na.y * 0.72 + 60}
                   x2={nb.x}
-                  y2={nb.y * 0.85 + 40}
+                  y2={nb.y * 0.72 + 60}
                   stroke={isHot ? "var(--color-pulse-400)" : "rgba(139,164,180,0.28)"}
                   strokeWidth={isHot ? 1.8 : 1}
                   className={isHot ? "edge-flow" : ""}
@@ -138,7 +138,7 @@ export default function HeroNetwork() {
           {!reduced &&
             pulses.map((p, i) => (
               <circle key={i} r="3" fill="var(--color-pulse-300)" opacity="0.9">
-                <animateMotion dur={p.dur} begin={p.begin} repeatCount="indefinite" path={p.path.replace(/(\d+) (\d+)/g, (_, x, y) => `${x} ${parseFloat(y) * 0.85 + 40}`)} />
+                <animateMotion dur={p.dur} begin={p.begin} repeatCount="indefinite" path={p.path.replace(/(\d+) (\d+)/g, (_, x, y) => `${x} ${parseFloat(y) * 0.72 + 60}`)} />
               </circle>
             ))}
 
@@ -150,7 +150,7 @@ export default function HeroNetwork() {
             return (
               <g
                 key={n.id}
-                transform={`translate(${n.x} ${n.y * 0.85 + 40})`}
+                transform={`translate(${n.x} ${n.y * 0.72 + 60})`}
                 onMouseEnter={() => setHovered(n.id)}
                 onMouseLeave={() => setHovered(null)}
                 style={{ cursor: "pointer" }}
