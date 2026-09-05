@@ -56,24 +56,24 @@ export default function Hero() {
         <NodeDot size={7} />
       </div>
 
-      <div className="relative mx-auto max-w-7xl px-5 pb-16 pt-20 sm:px-8 lg:pt-24">
-        <div className="grid items-center gap-14 lg:grid-cols-12">
+      <div className="relative mx-auto max-w-7xl px-5 pb-12 pt-16 sm:px-8 lg:pt-20">
+        <div className="grid items-center gap-10 lg:grid-cols-12">
           <div className="lg:col-span-6">
             <Reveal>
-              <p className="flex items-center gap-3 font-mono text-[11px] font-medium uppercase tracking-[0.26em] text-pulse-300">
-                <span className="inline-block h-[7px] w-[7px] rotate-45 bg-pulse-400" />
+              <p className="flex items-center gap-3 font-mono text-[10px] font-medium uppercase tracking-[0.26em] text-pulse-300">
+                <span className="inline-block h-[6px] w-[6px] rotate-45 bg-pulse-400" />
                 AI Research &amp; Learning Platform
               </p>
             </Reveal>
 
-            <h1 className="mt-6 font-display text-[2.3rem] font-bold leading-[1.05] tracking-tight sm:text-[3.3rem] xl:text-[3.55rem]">
+            <h1 className="mt-5 font-display text-[2rem] font-bold leading-[1.05] tracking-tight sm:text-[2.8rem] xl:text-[3.2rem]">
               <span className="block">{line1}</span>
               <span className="block text-paper/85">{line2}</span>
               <span className="block text-pulse-300">{line3}</span>
             </h1>
 
             <Reveal delay={200}>
-              <p className="mt-6 max-w-xl text-[17px] leading-relaxed text-paper/65">
+              <p className="mt-5 max-w-xl text-[15px] leading-relaxed text-paper/65">
                 BeingNeuron is an interactive research and AI learning platform that helps you
                 understand complex papers, visualize how ideas connect, and experiment with AI
                 systems.
@@ -81,7 +81,7 @@ export default function Hero() {
             </Reveal>
 
             <Reveal delay={320}>
-              <div className="mt-8 flex flex-wrap items-center gap-4">
+              <div className="mt-6 flex flex-wrap items-center gap-3">
                 <ButtonLink variant="primary" onClick={go("products")} arrow>
                   Explore BeingNeuron
                 </ButtonLink>
@@ -92,7 +92,7 @@ export default function Hero() {
             </Reveal>
 
             <Reveal delay={430}>
-              <div className="mt-10 space-y-2 border-t border-pulse-400/10 pt-5 text-paper/50">
+              <div className="mt-8 space-y-2 border-t border-pulse-400/10 pt-4 text-paper/50">
                 <StatusLine>
                   <span>synapse.engine — knowledge graphs · standby</span>
                 </StatusLine>
