@@ -85,18 +85,18 @@ export default function HeroNetwork() {
   ];
 
   return (
-    <div className="relative overflow-hidden rounded-xl border border-paper/12 bg-ink-900/70 shadow-[0_40px_90px_-40px_rgba(0,0,0,0.8)] backdrop-blur-sm">
+    <div className="relative overflow-hidden rounded-lg border border-paper/12 bg-ink-900/70 shadow-[0_40px_90px_-40px_rgba(0,0,0,0.8)] backdrop-blur-sm">
       {/* title bar */}
-      <div className="flex items-center justify-between border-b border-paper/10 px-4 py-2.5">
+      <div className="flex items-center justify-between border-b border-paper/10 px-3 py-2">
         <div className="flex items-center gap-1.5">
-          <span className="h-2 w-2 rounded-full bg-ink-600" />
-          <span className="h-2 w-2 rounded-full bg-ink-600" />
-          <span className="h-2 w-2 rounded-full bg-pulse-400/80" />
+          <span className="h-1.5 w-1.5 rounded-full bg-ink-600" />
+          <span className="h-1.5 w-1.5 rounded-full bg-ink-600" />
+          <span className="h-1.5 w-1.5 rounded-full bg-pulse-400/80" />
         </div>
-        <p className="font-mono text-[10.5px] tracking-[0.16em] text-paper/50">
+        <p className="font-mono text-[9.5px] tracking-[0.16em] text-paper/50">
           SYNAPSE — LIVE GRAPH PREVIEW
         </p>
-        <p className="font-mono text-[10.5px] text-paper/40">v0.1</p>
+        <p className="font-mono text-[9.5px] text-paper/40">v0.1</p>
       </div>
 
       <div className="relative">
@@ -156,32 +156,32 @@ export default function HeroNetwork() {
                 style={{ cursor: "pointer" }}
               >
                 <circle
-                  r={hot ? 30 : 26}
+                  r={hot ? 28 : 24}
                   fill={hot ? "rgba(53,196,174,0.14)" : "rgba(15,33,48,0.9)"}
                   stroke={hot || connected ? "var(--color-pulse-400)" : "rgba(139,164,180,0.35)"}
                   strokeWidth={hot ? 1.6 : 1}
                   style={{ transition: "all .3s ease" }}
                 />
                 <circle
-                  r={hot ? 8 : 6.5}
+                  r={hot ? 7 : 6}
                   fill={hot || connected ? "var(--color-pulse-300)" : "var(--color-paper)"}
                   style={{ transition: "all .3s ease" }}
                 />
                 <text
-                  y="-38"
+                  y="-36"
                   textAnchor="middle"
                   fontFamily="var(--font-mono)"
-                  fontSize="9.5"
+                  fontSize="9"
                   letterSpacing="2"
                   fill={hot ? "var(--color-pulse-300)" : "rgba(124,228,208,0.65)"}
                 >
                   {n.type}
                 </text>
                 <text
-                  y="46"
+                  y="44"
                   textAnchor="middle"
                   fontFamily="var(--font-mono)"
-                  fontSize="11"
+                  fontSize="10.5"
                   fill={hot ? "var(--color-paper)" : "rgba(242,244,239,0.72)"}
                 >
                   {n.label}
@@ -193,19 +193,19 @@ export default function HeroNetwork() {
       </div>
 
       {/* detail readout — in flow, never overlaps the graph */}
-      <div className="border-t border-paper/10 px-4 py-3">
+      <div className="border-t border-paper/10 px-3 py-2.5">
         {active ? (
           <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1">
-            <p className="font-mono text-[10px] tracking-[0.2em] text-pulse-300">{active.type}</p>
-            <p className="font-display text-sm font-semibold text-paper">{active.label}</p>
+            <p className="font-mono text-[9.5px] tracking-[0.2em] text-pulse-300">{active.type}</p>
+            <p className="font-display text-xs font-semibold text-paper">{active.label}</p>
             {active.meta.map((m) => (
-              <p key={m} className="font-mono text-[10px] tracking-wide text-paper/50">
+              <p key={m} className="font-mono text-[9.5px] tracking-wide text-paper/50">
                 {m}
               </p>
             ))}
           </div>
         ) : (
-          <p className="font-mono text-[10.5px] tracking-wide text-paper/40">
+          <p className="font-mono text-[10px] tracking-wide text-paper/40">
             <span className="text-pulse-300/80">readout</span> — hover a node · every concept stays
             linked to its source in the paper
           </p>
@@ -213,12 +213,12 @@ export default function HeroNetwork() {
       </div>
 
       {/* footer strip */}
-      <div className="flex items-center justify-between border-t border-paper/10 px-4 py-2.5">
-        <p className="font-mono text-[10px] tracking-wide text-paper/45">
+      <div className="flex items-center justify-between border-t border-paper/10 px-3 py-2">
+        <p className="font-mono text-[9.5px] tracking-wide text-paper/45">
           nodes 6 · edges 7 · domain neuroscience
         </p>
-        <p className="flex items-center gap-2 font-mono text-[10px] tracking-wide text-pulse-300/80">
-          <span className="anim-breathe inline-block h-1.5 w-1.5 rounded-full bg-pulse-400" />
+        <p className="flex items-center gap-2 font-mono text-[9.5px] tracking-wide text-pulse-300/80">
+          <span className="anim-breathe inline-block h-1 w-1 rounded-full bg-pulse-400" />
           evidence-linked
         </p>
       </div>
