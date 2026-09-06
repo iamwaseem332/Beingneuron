@@ -72,21 +72,6 @@ export default function OverviewPanel({
             {summary.authors.length > 6 ? ` +${summary.authors.length - 6} more` : ""}
           </p>
         )}
-        {summary && (
-          <dl className="mt-4 grid grid-cols-2 gap-x-3 gap-y-2.5 border-t border-ink-900/[0.08] pt-3.5">
-            {[
-              ["pages", summary.page_count],
-              ["words", summary.word_count.toLocaleString()],
-              ["sections", summary.section_count],
-              ["chunks", summary.chunk_count],
-            ].map(([k, v]) => (
-              <div key={k}>
-                <dt className="font-mono text-[8.5px] uppercase tracking-[0.16em] text-ink-400">{k}</dt>
-                <dd className="tnum mt-0.5 font-display text-[15px] font-bold text-ink-900">{v}</dd>
-              </div>
-            ))}
-          </dl>
-        )}
       </div>
 
       {/* graph index — click to filter */}
