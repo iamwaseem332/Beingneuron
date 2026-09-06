@@ -71,6 +71,7 @@ export default function ForceGraph({
   zoomRequest,
   onSelectNode,
   onSelectEdge,
+  staticLayout = false,
 }: ForceGraphProps) {
   const reduced = usePrefersReducedMotion();
   const wrapRef = useRef<HTMLDivElement | null>(null);
