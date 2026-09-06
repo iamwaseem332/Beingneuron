@@ -14,10 +14,10 @@ import { NODE_META, RELATION_META, type GraphEdge, type GraphNode, type NodeShap
 type SimNode = { id: string; x: number; y: number; vx: number; vy: number; r: number };
 type Transform = { x: number; y: number; k: number };
 
-const BASE_LINK_DIST = 96;
-const BASE_CHARGE = -1500;
-const GRAVITY = 0.05;
-const DAMPING = 0.82;
+const BASE_LINK_DIST = 60;
+const BASE_CHARGE = -800;
+const GRAVITY = 0.08;
+const DAMPING = 0.85;
 const ALPHA_DECAY = 0.026;
 
 export type ForceGraphProps = {
@@ -147,10 +147,11 @@ export default function ForceGraph({
     const sim = simRef.current;
     const list = nodes.map((n) => sim.get(n.id)!).filter(Boolean);
     
-    // Adjust physics based on node count to reduce congestion in detailed mode
-    const congestionFactor = nodeCount && nodeCount > 25 ? Math.min(1.8, 1 + (nodeCount - 25) / 30) : 1;
-    const LINK_DIST = BASE_LINK_DIST * congestionFactor;
-    const CHARGE = BASE_CHARGE * congestionFactor;
+    // Adjust physics based on node count to make graph more compact in detailed mode
+    // More nodes = smaller spacing and weaker repulsion for a tighter, clearer layout
+    const compactFactor = nodeCount && nodeCount > 25 ? Math.max(0.55, 1 - (nodeCount - 25) / 60) : 1;
+    const LINK_DIST = BASE_LINK_DIST * compactFactor;
+    const CHARGE = BASE_CHARGE * compactFactor;
     
     // repulsion (O(n²) — fine at graph scale)
     for (let i = 0; i < list.length; i += 1) {
