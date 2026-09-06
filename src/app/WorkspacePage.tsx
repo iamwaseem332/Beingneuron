@@ -453,7 +453,7 @@ export default function WorkspacePage() {
                 zoomRequest={zoomRequest}
                 onSelectNode={onSelectNode}
                 onSelectEdge={onSelectEdge}
-                staticLayout={false}
+                staticLayout={true}
                 nodeCount={visibleNodes.length}
                 isFullscreen={isFullscreen}
               />
