@@ -589,18 +589,7 @@ export default function ForceGraph({
                     {n.type.toUpperCase()}
                   </text>
                 )}
-                {/* Node label below */}
-                {labelVisible && (
-                  <text
-                    y="40"
-                    textAnchor="middle"
-                    fontFamily="var(--font-mono)"
-                    fontSize="10"
-                    fill={isHot ? "var(--color-paper)" : "rgba(242,244,239,0.72)"}
-                  >
-                    {n.label}
-                  </text>
-                )}
+                {/* Node label removed - details shown in inspector panel on click */}
               </g>
             );
           })}
