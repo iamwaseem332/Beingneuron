@@ -20,6 +20,29 @@ const GRAVITY = 0.08;
 const DAMPING = 0.85;
 const ALPHA_DECAY = 0.026;
 
+// Viewport-based spacing constants
+const VIEWPORT_BASE_WIDTH = 900; // reference width for normal view
+const VIEWPORT_BASE_HEIGHT = 560; // reference height for normal view
+const MAX_EXPAND_FACTOR = 1.8; // maximum spacing increase in fullscreen (not extreme)
+const MIN_EXPAND_FACTOR = 1.0; // baseline spacing
+
+// Calculate responsive expand factor based on viewport size and fullscreen state
+function calculateExpandFactor(isFullscreen: boolean, viewportWidth: number, viewportHeight: number): number {
+  if (!isFullscreen) {
+    return 1.0; // Normal mode uses baseline spacing
+  }
+  
+  // Calculate how much larger the current viewport is compared to baseline
+  const widthRatio = viewportWidth / VIEWPORT_BASE_WIDTH;
+  const heightRatio = viewportHeight / VIEWPORT_BASE_HEIGHT;
+  const viewportRatio = Math.max(widthRatio, heightRatio);
+  
+  // Smooth interpolation between normal and fullscreen spacing
+  // Fullscreen mode gets more space but capped at MAX_EXPAND_FACTOR
+  // The factor scales with viewport size for responsive spacing
+  return MIN_EXPAND_FACTOR + (MAX_EXPAND_FACTOR - MIN_EXPAND_FACTOR) * Math.min(1, (viewportRatio - 1) * 0.8);
+}
+
 export type ForceGraphProps = {
   nodes: GraphNode[];
   edges: GraphEdge[];
@@ -152,11 +175,22 @@ export default function ForceGraph({
     
     // Adjust physics based on node count and fullscreen mode
     // More nodes = smaller spacing for compact layout (normal mode)
-    // Fullscreen mode = larger spacing for clarity
     const compactFactor = nodeCount && nodeCount > 25 ? Math.max(0.55, 1 - (nodeCount - 25) / 60) : 1;
     
-    // Fullscreen spreads nodes apart significantly for better clarity in both overview and detailed modes
-    const expandFactor = isFullscreen ? 3.5 : 1;
+    // Responsive spacing based on viewport size
+    // Calculate how much larger the current viewport is compared to baseline
+    const widthRatio = size.w / VIEWPORT_BASE_WIDTH;
+    const heightRatio = size.h / VIEWPORT_BASE_HEIGHT;
+    const viewportRatio = Math.max(widthRatio, heightRatio);
+    
+    // Smooth interpolation between normal and fullscreen spacing
+    // Fullscreen mode gets more space but capped at MAX_EXPAND_FACTOR
+    const fullscreenExpand = isFullscreen 
+      ? MIN_EXPAND_FACTOR + (MAX_EXPAND_FACTOR - MIN_EXPAND_FACTOR) * Math.min(1, (viewportRatio - 1) * 0.8)
+      : 1.0;
+    
+    // Combine factors: compact for many nodes, expanded for fullscreen
+    const expandFactor = fullscreenExpand;
     const LINK_DIST = BASE_LINK_DIST * compactFactor * expandFactor;
     const CHARGE = BASE_CHARGE * compactFactor * expandFactor * 1.3;
     
@@ -285,10 +319,40 @@ export default function ForceGraph({
   /* Reheat simulation when fullscreen toggles to spread nodes apart */
   useEffect(() => {
     if (staticLayout || reduced) return;
-    // Boost alpha to re-energize the simulation when entering fullscreen
+    // Boost alpha to re-energize the simulation when entering/exiting fullscreen
+    // This triggers a smooth transition to the new layout with updated spacing
     alphaRef.current = Math.max(alphaRef.current, 0.8);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isFullscreen, staticLayout, reduced]);
+
+  /* Smoothly animate node positions when fullscreen changes - preserve user arrangement */
+  useEffect(() => {
+    if (staticLayout || reduced) return;
+    
+    // When viewport size changes significantly (fullscreen toggle or resize),
+    // gently push nodes outward/inward while preserving relative structure
+    const sim = simRef.current;
+    const pts = nodes.map((n) => sim.get(n.id)).filter(Boolean) as SimNode[];
+    if (pts.length === 0) return;
+    
+    // Calculate centroid of current layout
+    const centerX = pts.reduce((sum, p) => sum + p.x, 0) / pts.length;
+    const centerY = pts.reduce((sum, p) => sum + p.y, 0) / pts.length;
+    
+    // Apply gentle radial force to spread/contract nodes
+    const targetExpand = isFullscreen ? 1.15 : 0.92; // subtle expansion/contraction
+    
+    for (const p of pts) {
+      const dx = p.x - centerX;
+      const dy = p.y - centerY;
+      p.vx += dx * 0.008 * (targetExpand - 1);
+      p.vy += dy * 0.008 * (targetExpand - 1);
+    }
+    
+    // Re-energize simulation for smooth transition
+    alphaRef.current = Math.max(alphaRef.current, 0.6);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [size.w, size.h, isFullscreen, staticLayout, reduced]);
 
   /* focus a node (from search) */
   useEffect(() => {
