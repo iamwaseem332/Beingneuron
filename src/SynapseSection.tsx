@@ -144,7 +144,6 @@ export default function SynapseSection() {
                   <p className="font-mono text-[8.5px] tracking-[0.16em] text-ink-500">
                     SYNAPSE / ANALYSIS PREVIEW
                   </p>
-                  <Tag className="text-[10px]">neuroscience · illustrative</Tag>
                 </div>
 
                 <div className="grid md:grid-cols-5">

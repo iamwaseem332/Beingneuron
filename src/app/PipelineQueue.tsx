@@ -204,23 +204,7 @@ function DocumentPanel({ job }: { job: PaperJob }) {
 
   return (
     <div className="drop-in mt-4 overflow-hidden rounded-lg border border-ink-900/12 bg-paper-card">
-      <div className="grid grid-cols-2 gap-px bg-ink-900/[0.08] sm:grid-cols-3 lg:grid-cols-6">
-        {[
-          ["pages", String(doc.pageCount)],
-          ["words", doc.wordCount.toLocaleString()],
-          ["sections", String(doc.sections.length)],
-          ["chunks", String(chunks.length)],
-          ["two-column p.", String(doc.twoColumnPages)],
-          ["noise removed", String(doc.removedHeadersFooters + doc.removedPageNumbers)],
-        ].map(([k, v]) => (
-          <div key={k} className="bg-paper-card px-3.5 py-3">
-            <p className="font-mono text-[8.5px] uppercase tracking-[0.16em] text-ink-400">{k}</p>
-            <p className="tnum mt-1 font-display text-[17px] font-bold text-ink-900">{v}</p>
-          </div>
-        ))}
-      </div>
-
-      <div className="grid gap-5 border-t border-ink-900/[0.08] p-4 lg:grid-cols-2">
+      <div className="grid gap-5 p-4 lg:grid-cols-2">
         {/* sections — traceable to pages */}
         <div>
           <p className="font-mono text-[9.5px] uppercase tracking-[0.2em] text-ink-400">Detected structure</p>
