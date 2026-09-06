@@ -14,8 +14,8 @@ import { NODE_META, RELATION_META, type GraphEdge, type GraphNode, type NodeShap
 type SimNode = { id: string; x: number; y: number; vx: number; vy: number; r: number };
 type Transform = { x: number; y: number; k: number };
 
-const LINK_DIST = 96;
-const CHARGE = -1500;
+const BASE_LINK_DIST = 96;
+const BASE_CHARGE = -1500;
 const GRAVITY = 0.05;
 const DAMPING = 0.82;
 const ALPHA_DECAY = 0.026;
@@ -32,6 +32,8 @@ export type ForceGraphProps = {
   zoomRequest?: { factor: number; nonce: number } | null;
   /** Use static layout like hero section (no force simulation) */
   staticLayout?: boolean;
+  /** Number of visible nodes - used to adjust physics for congestion */
+  nodeCount?: number;
   onSelectNode: (id: string | null) => void;
   onSelectEdge: (id: string | null) => void;
 };
@@ -72,6 +74,7 @@ export default function ForceGraph({
   onSelectNode,
   onSelectEdge,
   staticLayout = false,
+  nodeCount,
 }: ForceGraphProps) {
   const reduced = usePrefersReducedMotion();
   const wrapRef = useRef<HTMLDivElement | null>(null);
@@ -143,6 +146,12 @@ export default function ForceGraph({
   const tick = () => {
     const sim = simRef.current;
     const list = nodes.map((n) => sim.get(n.id)!).filter(Boolean);
+    
+    // Adjust physics based on node count to reduce congestion in detailed mode
+    const congestionFactor = nodeCount && nodeCount > 25 ? Math.min(1.8, 1 + (nodeCount - 25) / 30) : 1;
+    const LINK_DIST = BASE_LINK_DIST * congestionFactor;
+    const CHARGE = BASE_CHARGE * congestionFactor;
+    
     // repulsion (O(n²) — fine at graph scale)
     for (let i = 0; i < list.length; i += 1) {
       for (let j = i + 1; j < list.length; j += 1) {

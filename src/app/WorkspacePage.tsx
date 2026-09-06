@@ -453,6 +453,7 @@ export default function WorkspacePage() {
                 onSelectNode={onSelectNode}
                 onSelectEdge={onSelectEdge}
                 staticLayout={true}
+                nodeCount={visibleNodes.length}
               />
             )}
             {/* canvas caption */}
