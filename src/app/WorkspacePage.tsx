@@ -419,15 +419,6 @@ export default function WorkspacePage() {
               </button>
             </div>
           </div>
-          <div className="mt-5 flex flex-wrap gap-2">
-            <MetaChip k="source" v={job?.source_type === "arxiv" ? `arXiv ${job?.arxiv_id}` : "pdf upload"} />
-            {summary && <MetaChip k="pages" v={String(summary.page_count)} />}
-            {summary && <MetaChip k="words" v={summary.word_count.toLocaleString()} />}
-            {summary && <MetaChip k="chunks" v={String(summary.chunk_count)} />}
-            <MetaChip k="graph" v={`${graph.stats.node_count}n · ${graph.stats.edge_count}e`} />
-            <MetaChip k="engine" v={mode === "supabase" ? "supabase" : "demo · local"} />
-            {job && <MetaChip k="analyzed" v={timeAgo(job.updated_at)} />}
-          </div>
         </div>
       </header>
 
