@@ -428,6 +428,7 @@ export default function WorkspacePage() {
         <div className="min-w-0 space-y-4">
           {/* graph canvas */}
           <div className="relative h-[520px] overflow-hidden rounded-xl border border-ink-800 bg-ink-950 sm:h-[600px] lg:h-[680px]">
+            <div className="bg-grid-dark pointer-events-none absolute inset-0 opacity-70" />
             {visibleNodes.length === 0 ? (
               <div className="flex h-full flex-col items-center justify-center gap-3 px-8 text-center">
                 <IconGraph size={26} className="text-paper/25" />
