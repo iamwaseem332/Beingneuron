@@ -352,8 +352,39 @@ export default function ForceGraph({
     (selectedNodeId !== null && id !== selectedNodeId && !edges.some((e) => (e.source === selectedNodeId || e.target === selectedNodeId) && (e.source === id || e.target === id)));
   const showLabels = t.k > 0.55;
 
+  // Create signal pulses for connected nodes (like hero)
+  const pulses = useMemo(() => {
+    if (reduced || edges.length === 0) return [];
+    const pulseEdges: { path: string; dur: string; begin: string }[] = [];
+    edges.forEach((e, i) => {
+      const a = pos(e.source);
+      const b = pos(e.target);
+      if (a && b) {
+        pulseEdges.push({
+          path: `M${a.x} ${a.y} L${b.x} ${b.y}`,
+          dur: `${3 + Math.random() * 2}s`,
+          begin: `${(i * 0.6) % 3}s`,
+        });
+      }
+    });
+    return pulseEdges.slice(0, 4); // Limit to 4 pulses like hero
+  }, [edges, reduced, sim]);
+
   return (
     <div ref={wrapRef} className="relative h-full w-full overflow-hidden bg-ink-900/70">
+      {/* Title bar like hero */}
+      <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between border-b border-paper/10 px-2.5 py-1.5 bg-ink-900/90 backdrop-blur-sm">
+        <div className="flex items-center gap-1.5">
+          <span className="h-1.5 w-1.5 rounded-full bg-ink-600" />
+          <span className="h-1.5 w-1.5 rounded-full bg-ink-600" />
+          <span className="h-1.5 w-1.5 rounded-full bg-pulse-400/80" />
+        </div>
+        <p className="font-mono text-[9px] tracking-[0.16em] text-paper/50">
+          SYNAPSE — LIVE GRAPH PREVIEW
+        </p>
+        <p className="font-mono text-[9px] text-paper/40">v0.1</p>
+      </div>
+      
       {/* Grid background like hero */}
       <svg className="absolute inset-0 h-full w-full" xmlns="http://www.w3.org/2000/svg">
         <defs>
@@ -373,7 +404,7 @@ export default function ForceGraph({
         ref={svgRef}
         width={size.w}
         height={size.h}
-        className="relative block cursor-grab touch-none select-none active:cursor-grabbing"
+        className="relative block cursor-grab touch-none select-none active:cursor-grabbing mt-8"
         role="application"
         aria-label="Knowledge graph canvas — scroll to zoom, drag to pan, click nodes and edges to inspect"
         onPointerDown={onPointerDown}
@@ -470,6 +501,14 @@ export default function ForceGraph({
             );
           })}
 
+          {/* signal pulses traveling between nodes (like hero) */}
+          {!reduced &&
+            pulses.map((p, i) => (
+              <circle key={i} r="3" fill="var(--color-pulse-300)" opacity="0.9">
+                <animateMotion dur={p.dur} begin={p.begin} repeatCount="indefinite" path={p.path} />
+              </circle>
+            ))}
+
           {/* nodes - Hero section style: simple circles with inner dot */}
           {nodes.map((n) => {
             const s = pos(n.id);
@@ -545,9 +584,15 @@ export default function ForceGraph({
         </g>
       </svg>
 
-      {/* zoom readout */}
-      <div className="pointer-events-none absolute bottom-3 right-3 rounded-md border border-paper/12 bg-ink-950/80 px-2.5 py-1 font-mono text-[9.5px] tracking-[0.16em] text-paper/50 backdrop-blur-sm">
-        zoom {(t.k * 100).toFixed(0)}%
+      {/* Footer strip like hero */}
+      <div className="absolute bottom-0 left-0 right-0 z-10 flex items-center justify-between border-t border-paper/10 px-2.5 py-1.5 bg-ink-900/90 backdrop-blur-sm">
+        <p className="font-mono text-[9px] tracking-wide text-paper/45">
+          nodes {nodes.length} · edges {edges.length} · domain research
+        </p>
+        <p className="flex items-center gap-2 font-mono text-[9px] tracking-wide text-pulse-300/80">
+          <span className="anim-breathe inline-block h-1 w-1 rounded-full bg-pulse-400" />
+          evidence-linked
+        </p>
       </div>
     </div>
   );
