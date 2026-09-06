@@ -423,18 +423,11 @@ export default function WorkspacePage() {
       </header>
 
       {/* ---------- workspace body ---------- */}
-      <div className="grid gap-6 xl:grid-cols-[290px_minmax(0,1fr)_350px]">
-        {/* left rail (desktop) */}
-        <aside className="hidden xl:block" aria-label="Paper overview">
-          <div className="sticky top-20 h-[calc(100vh-7rem)]">
-            <OverviewPanel graph={graph} summary={summary} doc={state.doc} hiddenTypes={hiddenTypes} onToggleType={toggleType} />
-          </div>
-        </aside>
-
-        {/* center column */}
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_350px]">
+        {/* center column - full width graph area */}
         <div className="min-w-0 space-y-4">
           {/* graph canvas */}
-          <div className="relative h-[440px] overflow-hidden rounded-xl border border-ink-800 bg-ink-950 sm:h-[520px] lg:h-[560px]">
+          <div className="relative h-[520px] overflow-hidden rounded-xl border border-ink-800 bg-ink-950 sm:h-[600px] lg:h-[680px]">
             {visibleNodes.length === 0 ? (
               <div className="flex h-full flex-col items-center justify-center gap-3 px-8 text-center">
                 <IconGraph size={26} className="text-paper/25" />
