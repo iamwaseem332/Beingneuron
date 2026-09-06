@@ -427,7 +427,7 @@ export default function WorkspacePage() {
         {/* center column - full width graph area */}
         <div className="min-w-0 space-y-4">
           {/* graph canvas */}
-          <div className="relative h-[520px] overflow-hidden rounded-xl border border-ink-800 bg-ink-950 sm:h-[600px] lg:h-[680px]">
+          <div className="relative h-[400px] overflow-hidden rounded-xl border border-ink-800 bg-ink-950 sm:h-[450px] lg:h-[500px]">
             <div className="bg-grid-dark pointer-events-none absolute inset-0 opacity-70" />
             {visibleNodes.length === 0 ? (
               <div className="flex h-full flex-col items-center justify-center gap-3 px-8 text-center">
@@ -452,6 +452,7 @@ export default function WorkspacePage() {
                 zoomRequest={zoomRequest}
                 onSelectNode={onSelectNode}
                 onSelectEdge={onSelectEdge}
+                staticLayout={true}
               />
             )}
             {/* canvas caption */}
