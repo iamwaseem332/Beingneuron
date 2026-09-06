@@ -11,6 +11,7 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
+*.py.class
 .Python
 env/
 venv/
@@ -26,22 +27,19 @@ venv/
 .env.local
 .env.*
 
-# IDE files
+# IDE
 .vscode/
 .idea/
 *.swp
 *.swo
 *.tmp
 
-# OS files
-.DS_Store
-Thumbs.db
-
-# Coverage reports
+# Coverage
 coverage/
 htmlcov/
 .coverage
 
-# MyPy cache
-.mypy_cache/
+# OS
+.DS_Store
+Thumbs.db
 ```
