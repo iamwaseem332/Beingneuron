@@ -433,7 +433,49 @@ export default function WorkspacePage() {
 
         {/* center column */}
         <div className="min-w-0 space-y-4">
-          {/* control deck */}
+          {/* graph canvas */}
+          <div className="relative h-[440px] overflow-hidden rounded-xl border border-ink-800 bg-ink-950 sm:h-[520px] lg:h-[560px]">
+            {visibleNodes.length === 0 ? (
+              <div className="flex h-full flex-col items-center justify-center gap-3 px-8 text-center">
+                <IconGraph size={26} className="text-paper/25" />
+                <p className="font-display text-[15px] font-semibold text-paper/70">Nothing matches these filters</p>
+                <p className="max-w-[34ch] font-mono text-[10px] leading-relaxed text-paper/40">
+                  loosen the importance threshold or re-enable some node and relation types.
+                </p>
+                <button type="button" onClick={clearFilters} className="mt-1 rounded-full border border-pulse-400/50 px-4 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-pulse-300 transition-all hover:bg-pulse-400 hover:text-ink-950">
+                  clear filters
+                </button>
+              </div>
+            ) : (
+              <ForceGraph
+                nodes={visibleNodes}
+                edges={visibleEdges}
+                selectedNodeId={selectedNodeId}
+                selectedEdgeId={selectedEdgeId}
+                highlightIds={highlightIds}
+                focusRequest={focusRequest}
+                resetNonce={resetNonce}
+                zoomRequest={zoomRequest}
+                onSelectNode={onSelectNode}
+                onSelectEdge={onSelectEdge}
+              />
+            )}
+            {/* canvas caption */}
+            <div className="pointer-events-none absolute left-3 top-3 rounded-md border border-paper/12 bg-ink-950/80 px-2.5 py-1.5 font-mono text-[9px] uppercase tracking-[0.16em] text-paper/50 backdrop-blur-sm">
+              {level} · {levelMeta.nodes} nodes · {visibleEdges.length} edges shown
+            </div>
+            {highlightIds && highlightIds.size > 0 && (
+              <button
+                type="button"
+                onClick={() => focusNode([...highlightIds][0])}
+                className="absolute right-3 top-3 rounded-md border border-signal-400/50 bg-ink-950/85 px-3 py-1.5 font-mono text-[9px] uppercase tracking-[0.14em] text-signal-300 backdrop-blur-sm transition-all hover:bg-signal-400 hover:text-ink-950"
+              >
+                focus first match
+              </button>
+            )}
+          </div>
+
+          {/* control deck - moved to right side below graph */}
           <div className="rounded-xl border border-ink-900/12 bg-paper-card p-4">
             <div className="flex flex-wrap items-center gap-3">
               {/* search */}
@@ -554,48 +596,6 @@ export default function WorkspacePage() {
                 </button>
               )}
             </div>
-          </div>
-
-          {/* graph canvas */}
-          <div className="relative h-[440px] overflow-hidden rounded-xl border border-ink-800 bg-ink-950 sm:h-[520px] lg:h-[560px]">
-            {visibleNodes.length === 0 ? (
-              <div className="flex h-full flex-col items-center justify-center gap-3 px-8 text-center">
-                <IconGraph size={26} className="text-paper/25" />
-                <p className="font-display text-[15px] font-semibold text-paper/70">Nothing matches these filters</p>
-                <p className="max-w-[34ch] font-mono text-[10px] leading-relaxed text-paper/40">
-                  loosen the importance threshold or re-enable some node and relation types.
-                </p>
-                <button type="button" onClick={clearFilters} className="mt-1 rounded-full border border-pulse-400/50 px-4 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-pulse-300 transition-all hover:bg-pulse-400 hover:text-ink-950">
-                  clear filters
-                </button>
-              </div>
-            ) : (
-              <ForceGraph
-                nodes={visibleNodes}
-                edges={visibleEdges}
-                selectedNodeId={selectedNodeId}
-                selectedEdgeId={selectedEdgeId}
-                highlightIds={highlightIds}
-                focusRequest={focusRequest}
-                resetNonce={resetNonce}
-                zoomRequest={zoomRequest}
-                onSelectNode={onSelectNode}
-                onSelectEdge={onSelectEdge}
-              />
-            )}
-            {/* canvas caption */}
-            <div className="pointer-events-none absolute left-3 top-3 rounded-md border border-paper/12 bg-ink-950/80 px-2.5 py-1.5 font-mono text-[9px] uppercase tracking-[0.16em] text-paper/50 backdrop-blur-sm">
-              {level} · {levelMeta.nodes} nodes · {visibleEdges.length} edges shown
-            </div>
-            {highlightIds && highlightIds.size > 0 && (
-              <button
-                type="button"
-                onClick={() => focusNode([...highlightIds][0])}
-                className="absolute right-3 top-3 rounded-md border border-signal-400/50 bg-ink-950/85 px-3 py-1.5 font-mono text-[9px] uppercase tracking-[0.14em] text-signal-300 backdrop-blur-sm transition-all hover:bg-signal-400 hover:text-ink-950"
-              >
-                focus first match
-              </button>
-            )}
           </div>
         </div>
 
