@@ -34,6 +34,8 @@ export type ForceGraphProps = {
   staticLayout?: boolean;
   /** Number of visible nodes - used to adjust physics for congestion */
   nodeCount?: number;
+  /** Fullscreen mode - spreads nodes apart for better clarity */
+  isFullscreen?: boolean;
   onSelectNode: (id: string | null) => void;
   onSelectEdge: (id: string | null) => void;
 };
@@ -75,6 +77,7 @@ export default function ForceGraph({
   onSelectEdge,
   staticLayout = false,
   nodeCount,
+  isFullscreen = false,
 }: ForceGraphProps) {
   const reduced = usePrefersReducedMotion();
   const wrapRef = useRef<HTMLDivElement | null>(null);
@@ -147,11 +150,15 @@ export default function ForceGraph({
     const sim = simRef.current;
     const list = nodes.map((n) => sim.get(n.id)!).filter(Boolean);
     
-    // Adjust physics based on node count to make graph more compact in detailed mode
-    // More nodes = smaller spacing and weaker repulsion for a tighter, clearer layout
+    // Adjust physics based on node count and fullscreen mode
+    // More nodes = smaller spacing for compact layout (normal mode)
+    // Fullscreen mode = larger spacing for clarity
     const compactFactor = nodeCount && nodeCount > 25 ? Math.max(0.55, 1 - (nodeCount - 25) / 60) : 1;
-    const LINK_DIST = BASE_LINK_DIST * compactFactor;
-    const CHARGE = BASE_CHARGE * compactFactor;
+    
+    // Fullscreen spreads nodes apart for better clarity in both overview and detailed modes
+    const expandFactor = isFullscreen ? 2.2 : 1;
+    const LINK_DIST = BASE_LINK_DIST * compactFactor * expandFactor;
+    const CHARGE = BASE_CHARGE * compactFactor * expandFactor;
     
     // repulsion (O(n²) — fine at graph scale)
     for (let i = 0; i < list.length; i += 1) {
