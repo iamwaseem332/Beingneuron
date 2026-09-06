@@ -155,10 +155,10 @@ export default function ForceGraph({
     // Fullscreen mode = larger spacing for clarity
     const compactFactor = nodeCount && nodeCount > 25 ? Math.max(0.55, 1 - (nodeCount - 25) / 60) : 1;
     
-    // Fullscreen spreads nodes apart for better clarity in both overview and detailed modes
-    const expandFactor = isFullscreen ? 2.2 : 1;
+    // Fullscreen spreads nodes apart significantly for better clarity in both overview and detailed modes
+    const expandFactor = isFullscreen ? 3.5 : 1;
     const LINK_DIST = BASE_LINK_DIST * compactFactor * expandFactor;
-    const CHARGE = BASE_CHARGE * compactFactor * expandFactor;
+    const CHARGE = BASE_CHARGE * compactFactor * expandFactor * 1.3;
     
     // repulsion (O(n²) — fine at graph scale)
     for (let i = 0; i < list.length; i += 1) {
@@ -281,6 +281,14 @@ export default function ForceGraph({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nodes, edges, reduced, size.w, size.h, staticLayout]);
+
+  /* Reheat simulation when fullscreen toggles to spread nodes apart */
+  useEffect(() => {
+    if (staticLayout || reduced) return;
+    // Boost alpha to re-energize the simulation when entering fullscreen
+    alphaRef.current = Math.max(alphaRef.current, 0.8);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isFullscreen, staticLayout, reduced]);
 
   /* focus a node (from search) */
   useEffect(() => {
