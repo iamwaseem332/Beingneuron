@@ -30,6 +30,8 @@ export type ForceGraphProps = {
   resetNonce: number;
   /** Imperative zoom: { factor: 1.3 | 0.75 | … , nonce } — applied around the viewport center. */
   zoomRequest?: { factor: number; nonce: number } | null;
+  /** Use static layout like hero section (no force simulation) */
+  staticLayout?: boolean;
   onSelectNode: (id: string | null) => void;
   onSelectEdge: (id: string | null) => void;
 };
@@ -105,19 +107,33 @@ export default function ForceGraph({
     nodes.forEach((n, i) => {
       existing.add(n.id);
       if (!sim.has(n.id)) {
-        const angle = (TYPE_ORDER.indexOf(n.type) / TYPE_ORDER.length) * Math.PI * 2 + (i % 5) * 0.35;
-        const ring = 120 + (i % 4) * 70;
-        sim.set(n.id, {
-          id: n.id,
-          x: Math.cos(angle) * ring + (Math.random() - 0.5) * 30,
-          y: Math.sin(angle) * ring + (Math.random() - 0.5) * 30,
-          vx: 0,
-          vy: 0,
-          r: radiusOf(n),
-        });
+        if (staticLayout) {
+          // Hero section static layout - fixed positions in a circular pattern
+          const angle = (i / nodes.length) * Math.PI * 2;
+          const ring = 140 + (i % 3) * 40;
+          sim.set(n.id, {
+            id: n.id,
+            x: Math.cos(angle) * ring + size.w / 2,
+            y: Math.sin(angle) * ring + size.h / 2,
+            vx: 0,
+            vy: 0,
+            r: 6, // Exact hero dot size
+          });
+        } else {
+          const angle = (TYPE_ORDER.indexOf(n.type) / TYPE_ORDER.length) * Math.PI * 2 + (i % 5) * 0.35;
+          const ring = 120 + (i % 4) * 70;
+          sim.set(n.id, {
+            id: n.id,
+            x: Math.cos(angle) * ring + (Math.random() - 0.5) * 30,
+            y: Math.sin(angle) * ring + (Math.random() - 0.5) * 30,
+            vx: 0,
+            vy: 0,
+            r: radiusOf(n),
+          });
+        }
       } else {
         const s = sim.get(n.id)!;
-        s.r = radiusOf(n);
+        s.r = staticLayout ? 6 : radiusOf(n);
       }
     });
     for (const key of [...sim.keys()]) if (!existing.has(key)) sim.delete(key);
@@ -209,6 +225,12 @@ export default function ForceGraph({
   /* boot / data change */
   useEffect(() => {
     seedAndSync();
+    // If static layout (hero mode), skip force simulation entirely
+    if (staticLayout) {
+      setFrame((f) => f + 1);
+      fitView(false);
+      return;
+    }
     if (reduced) {
       alphaRef.current = 1;
       for (let i = 0; i < 320; i += 1) {
@@ -240,7 +262,7 @@ export default function ForceGraph({
       window.clearTimeout(fitTimer);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nodes, edges, reduced, size.w, size.h]);
+  }, [nodes, edges, reduced, size.w, size.h, staticLayout]);
 
   /* focus a node (from search) */
   useEffect(() => {
@@ -524,12 +546,12 @@ export default function ForceGraph({
                 key={n.id}
                 transform={`translate(${s.x} ${s.y})`}
                 opacity={dim ? 0.16 : 1}
-                className="cursor-pointer"
+                className={staticLayout ? "" : "cursor-pointer"}
                 style={{ transition: "opacity .25s ease" }}
-                onPointerDown={(e) => onNodePointerDown(e, n.id)}
+                onPointerDown={staticLayout ? undefined : (e) => onNodePointerDown(e, n.id)}
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (!dragRef.current?.moved) {
+                  if (!staticLayout && !dragRef.current?.moved) {
                     onSelectNode(n.id);
                     onSelectEdge(null);
                   }
