@@ -60,20 +60,6 @@ export default function OverviewPanel({
 
   return (
     <div className="flex h-full flex-col gap-5 overflow-y-auto app-scroll pr-1">
-      {/* paper block */}
-      <div className="rounded-xl border border-ink-900/12 bg-paper-card p-5">
-        <p className="font-mono text-[9px] uppercase tracking-[0.22em] text-pulse-700">Paper</p>
-        <h3 className="mt-2 font-display text-[15px] font-semibold leading-snug tracking-tight text-ink-900">
-          {summary?.title || graph.paper_title}
-        </h3>
-        {summary && summary.authors.length > 0 && (
-          <p className="mt-1.5 line-clamp-2 text-[11.5px] leading-relaxed text-ink-500">
-            {summary.authors.slice(0, 6).join(", ")}
-            {summary.authors.length > 6 ? ` +${summary.authors.length - 6} more` : ""}
-          </p>
-        )}
-      </div>
-
       {/* graph index — click to filter */}
       <div className="rounded-xl border border-ink-900/12 bg-paper-card p-5">
         <div className="flex items-baseline justify-between">
