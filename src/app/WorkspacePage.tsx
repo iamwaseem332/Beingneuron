@@ -143,6 +143,7 @@ export default function WorkspacePage() {
   const [resetNonce, setResetNonce] = useState(0);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [leftOpen, setLeftOpen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const focusNonce = useRef(0);
 
   const graph = state.graph;
@@ -425,9 +426,9 @@ export default function WorkspacePage() {
       {/* ---------- workspace body ---------- */}
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_350px]">
         {/* center column - full width graph area */}
-        <div className="min-w-0 space-y-4">
+        <div className={`min-w-0 space-y-4 ${isFullscreen ? 'fixed inset-0 z-50 bg-ink-950 p-4' : ''}`}>
           {/* graph canvas */}
-          <div className="relative h-[400px] overflow-hidden rounded-xl border border-ink-800 bg-ink-950 sm:h-[450px] lg:h-[500px]">
+          <div className={`relative overflow-hidden rounded-xl border border-ink-800 bg-ink-950 ${isFullscreen ? 'h-full' : 'h-[400px] sm:h-[450px] lg:h-[500px]'}`}>
             <div className="bg-grid-dark pointer-events-none absolute inset-0 opacity-70" />
             {visibleNodes.length === 0 ? (
               <div className="flex h-full flex-col items-center justify-center gap-3 px-8 text-center">
@@ -454,6 +455,7 @@ export default function WorkspacePage() {
                 onSelectEdge={onSelectEdge}
                 staticLayout={true}
                 nodeCount={visibleNodes.length}
+                isFullscreen={isFullscreen}
               />
             )}
             {/* canvas caption */}
@@ -469,6 +471,15 @@ export default function WorkspacePage() {
                 focus first match
               </button>
             )}
+            {/* fullscreen toggle button */}
+            <button
+              type="button"
+              onClick={() => setIsFullscreen(!isFullscreen)}
+              className="absolute right-3 top-10 rounded-md border border-ink-700 bg-ink-950/85 px-3 py-1.5 font-mono text-[9px] uppercase tracking-[0.14em] text-paper/70 backdrop-blur-sm transition-all hover:bg-ink-800 hover:text-paper"
+              title={isFullscreen ? "Exit full screen" : "Full screen"}
+            >
+              {isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
+            </button>
           </div>
 
           {/* control deck - moved to right side below graph */}
