@@ -352,13 +352,59 @@ export default function ForceGraph({
     (selectedNodeId !== null && id !== selectedNodeId && !edges.some((e) => (e.source === selectedNodeId || e.target === selectedNodeId) && (e.source === id || e.target === id)));
   const showLabels = t.k > 0.55;
 
+  // Create signal pulses for connected nodes (like hero)
+  const pulses = useMemo(() => {
+    if (reduced || edges.length === 0) return [];
+    const pulseEdges: { path: string; dur: string; begin: string }[] = [];
+    edges.forEach((e, i) => {
+      const a = pos(e.source);
+      const b = pos(e.target);
+      if (a && b) {
+        pulseEdges.push({
+          path: `M${a.x} ${a.y} L${b.x} ${b.y}`,
+          dur: `${3 + Math.random() * 2}s`,
+          begin: `${(i * 0.6) % 3}s`,
+        });
+      }
+    });
+    return pulseEdges.slice(0, 4); // Limit to 4 pulses like hero
+  }, [edges, reduced, sim]);
+
   return (
-    <div ref={wrapRef} className="relative h-full w-full overflow-hidden">
+    <div ref={wrapRef} className="relative h-full w-full overflow-hidden bg-ink-900/70">
+      {/* Title bar like hero */}
+      <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between border-b border-paper/10 px-2.5 py-1.5 bg-ink-900/90 backdrop-blur-sm">
+        <div className="flex items-center gap-1.5">
+          <span className="h-1.5 w-1.5 rounded-full bg-ink-600" />
+          <span className="h-1.5 w-1.5 rounded-full bg-ink-600" />
+          <span className="h-1.5 w-1.5 rounded-full bg-pulse-400/80" />
+        </div>
+        <p className="font-mono text-[9px] tracking-[0.16em] text-paper/50">
+          SYNAPSE — LIVE GRAPH PREVIEW
+        </p>
+        <p className="font-mono text-[9px] text-paper/40">v0.1</p>
+      </div>
+      
+      {/* Grid background like hero */}
+      <svg className="absolute inset-0 h-full w-full" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <pattern id="grid-pattern" width="40" height="40" patternUnits="userSpaceOnUse">
+            <path d="M40 0H0v40" fill="none" stroke="rgba(242,244,239,0.045)" strokeWidth="1" />
+          </pattern>
+          <radialGradient id="grid-glow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="rgba(18,163,146,0.08)" />
+            <stop offset="100%" stopColor="rgba(18,163,146,0)" />
+          </radialGradient>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#grid-pattern)" />
+        <rect width="100%" height="100%" fill="url(#grid-glow)" />
+      </svg>
+      
       <svg
         ref={svgRef}
         width={size.w}
         height={size.h}
-        className="block cursor-grab touch-none select-none active:cursor-grabbing"
+        className="relative block cursor-grab touch-none select-none active:cursor-grabbing mt-8"
         role="application"
         aria-label="Knowledge graph canvas — scroll to zoom, drag to pan, click nodes and edges to inspect"
         onPointerDown={onPointerDown}
@@ -455,16 +501,24 @@ export default function ForceGraph({
             );
           })}
 
-          {/* nodes */}
+          {/* signal pulses traveling between nodes (like hero) */}
+          {!reduced &&
+            pulses.map((p, i) => (
+              <circle key={i} r="3" fill="var(--color-pulse-300)" opacity="0.9">
+                <animateMotion dur={p.dur} begin={p.begin} repeatCount="indefinite" path={p.path} />
+              </circle>
+            ))}
+
+          {/* nodes - Hero section style: simple circles with inner dot */}
           {nodes.map((n) => {
             const s = pos(n.id);
             if (!s) return null;
-            const meta = NODE_META[n.type];
             const selected = selectedNodeId === n.id;
             const hoveredNode = hovered === n.id;
             const dim = isDimmed(n.id);
-            const r = s.r;
+            const r = 22; // Fixed radius like hero
             const labelVisible = showLabels || selected || hoveredNode || n.importance > 0.72;
+            const isHot = hoveredNode || selected;
             return (
               <g
                 key={n.id}
@@ -483,39 +537,45 @@ export default function ForceGraph({
                 onPointerEnter={() => setHovered(n.id)}
                 onPointerLeave={() => setHovered((h) => (h === n.id ? null : h))}
                 role="button"
-                aria-label={`${meta.label}: ${n.label}`}
+                aria-label={`${n.type}: ${n.label}`}
               >
-                {selected && <circle r={r + 7} fill="none" stroke="var(--color-pulse-300)" strokeWidth="1.2" strokeDasharray="3 4" className={reduced ? "" : "anim-breathe"} />}
-                {meta.shape === "circle" || meta.shape === "ring" ? (
-                  <circle
-                    r={hoveredNode ? r + 1.5 : r}
-                    fill={meta.shape === "ring" ? "var(--color-ink-950)" : meta.color}
-                    stroke={meta.color}
-                    strokeWidth={meta.shape === "ring" ? 2.4 : 1.4}
-                    style={{ transition: "r .2s ease" }}
-                  />
-                ) : (
-                  <path
-                    d={shapePath(meta.shape, hoveredNode ? r + 1.5 : r)}
-                    fill={meta.color}
-                    stroke="var(--color-ink-950)"
-                    strokeWidth="1.2"
-                  />
-                )}
-                {n.uncertain && <circle r={2.6} cx={r * 0.8} cy={-r * 0.8} fill="var(--color-signal-400)" stroke="var(--color-ink-950)" strokeWidth="1" />}
+                {/* Outer circle */}
+                <circle
+                  r={isHot ? 26 : 22}
+                  fill={isHot ? "rgba(53,196,174,0.14)" : "rgba(15,33,48,0.9)"}
+                  stroke={isHot ? "var(--color-pulse-400)" : "rgba(139,164,180,0.35)"}
+                  strokeWidth={isHot ? 1.6 : 1}
+                  style={{ transition: "all .3s ease" }}
+                />
+                {/* Inner dot */}
+                <circle
+                  r={isHot ? 6.5 : 5.5}
+                  fill={isHot ? "var(--color-pulse-300)" : "var(--color-paper)"}
+                  style={{ transition: "all .3s ease" }}
+                />
+                {/* Type label above */}
                 {labelVisible && (
                   <text
-                    y={r + 13}
+                    y="-34"
                     textAnchor="middle"
                     fontFamily="var(--font-mono)"
-                    fontSize={10.5 / Math.max(t.k, 0.75)}
-                    fill={selected ? "var(--color-paper)" : "rgba(242,244,239,0.72)"}
-                    stroke="var(--color-ink-950)"
-                    strokeWidth={3 / Math.max(t.k, 0.75)}
-                    paintOrder="stroke"
-                    style={{ pointerEvents: "none" }}
+                    fontSize="8.5"
+                    letterSpacing="2"
+                    fill={isHot ? "var(--color-pulse-300)" : "rgba(124,228,208,0.65)"}
                   >
-                    {n.label.length > 30 && !selected ? n.label.slice(0, 29) + "…" : n.label}
+                    {n.type.toUpperCase()}
+                  </text>
+                )}
+                {/* Node label below */}
+                {labelVisible && (
+                  <text
+                    y="40"
+                    textAnchor="middle"
+                    fontFamily="var(--font-mono)"
+                    fontSize="10"
+                    fill={isHot ? "var(--color-paper)" : "rgba(242,244,239,0.72)"}
+                  >
+                    {n.label}
                   </text>
                 )}
               </g>
@@ -524,9 +584,15 @@ export default function ForceGraph({
         </g>
       </svg>
 
-      {/* zoom readout */}
-      <div className="pointer-events-none absolute bottom-3 right-3 rounded-md border border-paper/12 bg-ink-950/80 px-2.5 py-1 font-mono text-[9.5px] tracking-[0.16em] text-paper/50 backdrop-blur-sm">
-        zoom {(t.k * 100).toFixed(0)}%
+      {/* Footer strip like hero */}
+      <div className="absolute bottom-0 left-0 right-0 z-10 flex items-center justify-between border-t border-paper/10 px-2.5 py-1.5 bg-ink-900/90 backdrop-blur-sm">
+        <p className="font-mono text-[9px] tracking-wide text-paper/45">
+          nodes {nodes.length} · edges {edges.length} · domain research
+        </p>
+        <p className="flex items-center gap-2 font-mono text-[9px] tracking-wide text-pulse-300/80">
+          <span className="anim-breathe inline-block h-1 w-1 rounded-full bg-pulse-400" />
+          evidence-linked
+        </p>
       </div>
     </div>
   );
