@@ -473,21 +473,10 @@ async function main() {
       failures: ['SIMULATED MODE: No actual evaluation performed - metrics are placeholders']
     };
     
-    // Check against targets
-    const failures: string[] = [];
-    
-    if (results.entityMetrics.precision < TARGETS.ENTITY_PRECISION) {
-      failures.push(`Entity precision ${results.entityMetrics.precision.toFixed(3)} below target ${TARGETS.ENTITY_PRECISION}`);
-    }
-    if (results.entityMetrics.recall < TARGETS.ENTITY_RECALL) {
-      failures.push(`Entity recall ${results.entityMetrics.recall.toFixed(3)} below target ${TARGETS.ENTITY_RECALL}`);
-    }
-    if (results.evidenceMetrics.spanAccuracy < TARGETS.SPAN_ACCURACY) {
-      failures.push(`Span accuracy ${results.evidenceMetrics.spanAccuracy.toFixed(3)} below target ${TARGETS.SPAN_ACCURACY}`);
-    }
-    
-    results.passed = failures.length === 0;
-    results.failures = failures;
+    // In SIMULATED mode, skip threshold checks and immediately fail
+    // Do NOT recompute passed/failures from placeholder metrics
+    const failures = results.failures;
+    results.passed = false;
     
     // Generate report
     const report = generateReport(results);
@@ -497,14 +486,8 @@ async function main() {
     console.log(report);
     console.log(`\nReport saved to: ${reportPath}`);
     
-    if (!results.passed) {
-      console.error('\n❌ Phase 4 validation FAILED');
-      console.error('Failures:', failures);
-      process.exit(1);
-    } else {
-      console.log('\n✅ Phase 4 validation PASSED');
-      process.exit(0);
-    }
+    console.error('\n❌ Phase 4 validation FAILED — SIMULATED MODE: No actual evaluation performed');
+    process.exit(1);
     
   } catch (error) {
     console.error('Evaluation failed:', error);

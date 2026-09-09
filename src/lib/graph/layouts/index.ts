@@ -1,10 +1,10 @@
 // src/lib/graph/layouts/index.ts
-export { LayoutEngine, LayoutConfig, LayoutResult, GraphNode, GraphEdge, NodePosition, LayoutAlgorithm } from './types';
+export type { LayoutEngine, LayoutConfig, LayoutResult, GraphNode, GraphEdge, NodePosition, LayoutAlgorithm } from './types';
 export { DagreLayoutEngine } from './DagreLayoutEngine';
 export { ElkLayoutEngine } from './ElkLayoutEngine';
 export { ForceDirectedLayoutEngine } from './ForceDirectedLayoutEngine';
 
-import { LayoutEngine, LayoutConfig, LayoutResult, GraphNode, GraphEdge, LayoutAlgorithm } from './types';
+import type { LayoutEngine, LayoutConfig, LayoutResult, GraphNode, GraphEdge, LayoutAlgorithm } from './types';
 import { DagreLayoutEngine } from './DagreLayoutEngine';
 import { ElkLayoutEngine } from './ElkLayoutEngine';
 import { ForceDirectedLayoutEngine } from './ForceDirectedLayoutEngine';

@@ -1,4 +1,11 @@
 // src/lib/graph/viewportAdapter.ts
+// Type augmentation for vendor-prefixed fullscreen properties
+interface Document {
+  webkitFullscreenElement?: Element | null;
+  mozFullScreenElement?: Element | null;
+  msFullscreenElement?: Element | null;
+}
+
 export interface ViewportMetrics {
   width: number;
   height: number;
