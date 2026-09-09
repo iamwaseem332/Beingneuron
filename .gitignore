@@ -2,117 +2,14 @@
 # Dependencies
 node_modules/
 
-# Build artifacts
-dist/
-build/
-target/
-
-# Logs
+# Logs and temp files
 *.log
 
-# Environment variables
+# Environment
 .env
 .env.local
-.env.*
+*.env.*
 
-# IDE
+# Editors
 .vscode/
-.idea/
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Temporary files
-*.tmp
-*.swp
-*.swo
-
-# Python
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.Python
-env/
-venv/
-.venv/
-pip-log.txt
-pip-delete-this-directory.txt
-.tox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.out
-*.pid
-*.seed
-*.session
-.hypothesis/
-selenium-debug.log
-.flake8
-.isort.cfg
-.pytest_cache/
-.mypy_cache/
-
-# Node.js
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-node_modules/
-jspm_packages/
-typings/
-.nyc_output
-coverage/
-.nyc_output/
-istanbul/
-.webpack/
-.next/
-.nuxt/
-.vuepress/dist
-.serverless/
-dists/
-dist-*/
-public/dist
-public/assets/js/vendor/
-public/assets/css/vendor/
-*.min.js
-*.min.css
-bundle.js
-bundle.js.map
-bundle-sfx.js
-bundle-sfx.js.map
-*.wasm
-.libs/
-node-pre-gyp/
-.nodemonignore
-nodemon-debug.log
-pm2 logs
-
-# Compression
-*.zip
-*.gz
-*.tar
-*.tgz
-*.bz2
-*.xz
-*.7z
-*.rar
-*.zst
-*.lz4
-*.lzh
-*.cab
-*.arj
-*.rpm
-*.deb
-*.Z
-*.lz
-*.lzo
-*.tar.gz
-*.tar.bz2
-*.tar.xz
-*.tar.zst
-
 ```

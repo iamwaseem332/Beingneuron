@@ -4,7 +4,7 @@
 -- Job queue table
 CREATE TABLE IF NOT EXISTS extraction_jobs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  paper_id UUID NOT NULL REFERENCES papers(id) ON DELETE CASCADE,
+  paper_id UUID NOT NULL REFERENCES extracted_documents(id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   status TEXT NOT NULL CHECK (status IN ('pending', 'processing', 'completed', 'failed', 'dead_letter')),
   current_chunk_sequence INT,
@@ -44,7 +44,7 @@ CREATE POLICY "Users view own jobs" ON extraction_jobs FOR SELECT
 
 DROP POLICY IF EXISTS "Service role manages jobs" ON extraction_jobs;
 CREATE POLICY "Service role manages jobs" ON extraction_jobs FOR ALL 
-  USING (true) WITH CHECK (true);
+  USING (auth.role() = 'service_role') WITH CHECK (auth.role() = 'service_role');
 
 -- View for queue health monitoring
 CREATE OR REPLACE VIEW vw_extraction_queue_health AS
@@ -72,7 +72,7 @@ BEGIN
   lock_id := hashtext(job_id::text)::BIGINT;
   
   -- Try to acquire lock (non-blocking)
-  RETURN pg_try_advisive_lock(lock_id);
+  RETURN pg_try_advisory_lock(lock_id);
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 

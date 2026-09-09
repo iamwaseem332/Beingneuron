@@ -403,7 +403,7 @@ async function main(): Promise<void> {
   
   if (corpusMetadata.papers.length === 0) {
     console.warn('WARNING: Corpus is empty. Please add papers following benchmarks/corpus/README.md');
-    console.warn('Proceeding with placeholder results...');
+    console.warn('⚠️  SIMULATED MODE: Results are placeholders, not actual benchmark measurements'); console.warn('   To run real benchmarks, implement full pipeline integration.');;
   }
   
   // Validate gold standard files exist
