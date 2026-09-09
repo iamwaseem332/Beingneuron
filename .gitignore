@@ -19,9 +19,9 @@ __pycache__/
 # Environment files
 .env
 .env.local
-.env.*
+*.env.*
 
-# Editors
+# Editor/IDE files
 .vscode/
 .idea/
 *.swp
@@ -33,22 +33,22 @@ coverage/
 htmlcov/
 .coverage
 
-# Testing
+# MyPy cache
 .mypy_cache/
+# Pytest cache
 .pytest_cache/
-.nyc_output/
-coverage-final.json
+
+# Distribution / packaging
+*.tar.gz
+*.whl
+*.egg
+*.egg-info/
 
 # OS generated files
 .DS_Store
 Thumbs.db
 
-# Archives
-*.zip
-*.tar.gz
-*.tar.bz2
-*.tar.xz
-*.gz
-*.rar
-*.7z
+# Temporary files
+*.tmp
+*.temp
 ```
