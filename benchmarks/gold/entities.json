@@ -1,0 +1,62 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Gold Standard Entity Annotations",
+  "description": "Ground truth entity annotations for benchmark corpus papers. Populate this file with manually annotated entities for each paper in the corpus.",
+  "type": "object",
+  "properties": {
+    "annotations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "paperId": {
+            "type": "string",
+            "description": "Must match paperId in corpus metadata.json"
+          },
+          "entities": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "entityId": {
+                  "type": "string",
+                  "description": "Unique identifier within this paper (e.g., 'e1', 'e2')"
+                },
+                "text": {
+                  "type": "string",
+                  "description": "Exact text span as it appears in the paper"
+                },
+                "normalizedForm": {
+                  "type": "string",
+                  "description": "Canonical/normalized form of the entity"
+                },
+                "entityType": {
+                  "type": "string",
+                  "enum": ["concept", "method", "dataset", "claim", "author", "metric", "task"]
+                },
+                "page": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "startOffset": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "endOffset": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": ["entityId", "text", "normalizedForm", "entityType", "page", "startOffset", "endOffset"],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": ["paperId", "entities"],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": ["annotations"],
+  "additionalProperties": false
+}

@@ -1,0 +1,134 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Benchmark Targets Configuration",
+  "description": "Target values and regression tolerances for all benchmark metrics",
+  "type": "object",
+  "properties": {
+    "extraction.medianProcessingTimeMs": {
+      "type": "object",
+      "properties": {
+        "max": { "type": "number" },
+        "regressionTolerance": { "type": "number" }
+      }
+    },
+    "extraction.p95ProcessingTimeMs": {
+      "type": "object",
+      "properties": {
+        "max": { "type": "number" },
+        "regressionTolerance": { "type": "number" }
+      }
+    },
+    "extraction.parseSuccessRate": {
+      "type": "object",
+      "properties": {
+        "min": { "type": "number" },
+        "regressionTolerance": { "type": "number" }
+      }
+    },
+    "extraction.entityPrecision": {
+      "type": "object",
+      "properties": {
+        "min": { "type": "number" },
+        "regressionTolerance": { "type": "number" }
+      }
+    },
+    "extraction.entityRecall": {
+      "type": "object",
+      "properties": {
+        "min": { "type": "number" },
+        "regressionTolerance": { "type": "number" }
+      }
+    },
+    "extraction.relationF1": {
+      "type": "object",
+      "properties": {
+        "min": { "type": "number" },
+        "regressionTolerance": { "type": "number" }
+      }
+    },
+    "extraction.evidenceAccuracy": {
+      "type": "object",
+      "properties": {
+        "min": { "type": "number" },
+        "regressionTolerance": { "type": "number" }
+      }
+    },
+    "extraction.tokenCostPerPaperUsd": {
+      "type": "object",
+      "properties": {
+        "max": { "type": "number" },
+        "regressionTolerance": { "type": "number" }
+      }
+    },
+    "graph.initialLayoutTimeMs": {
+      "type": "object",
+      "properties": {
+        "max": { "type": "number" },
+        "regressionTolerance": { "type": "number" }
+      }
+    },
+    "graph.nodeClickLatencyMs": {
+      "type": "object",
+      "properties": {
+        "max": { "type": "number" },
+        "regressionTolerance": { "type": "number" }
+      }
+    },
+    "graph.fullscreenTransitionMs": {
+      "type": "object",
+      "properties": {
+        "max": { "type": "number" },
+        "regressionTolerance": { "type": "number" }
+      }
+    },
+    "graph.layoutOverlapPercent": {
+      "type": "object",
+      "properties": {
+        "max": { "type": "number" },
+        "regressionTolerance": { "type": "number" }
+      }
+    },
+    "graph.dragFps": {
+      "type": "object",
+      "properties": {
+        "min": { "type": "number" },
+        "regressionTolerance": { "type": "number" }
+      }
+    },
+    "graph.multiPaperQueryRenderMs": {
+      "type": "object",
+      "properties": {
+        "max": { "type": "number" },
+        "regressionTolerance": { "type": "number" }
+      }
+    },
+    "database.paperGraphQueryP95Ms": {
+      "type": "object",
+      "properties": {
+        "max": { "type": "number" },
+        "regressionTolerance": { "type": "number" }
+      }
+    },
+    "database.indexHitRatio": {
+      "type": "object",
+      "properties": {
+        "min": { "type": "number" },
+        "regressionTolerance": { "type": "number" }
+      }
+    },
+    "database.orphanRecords": {
+      "type": "object",
+      "properties": {
+        "max": { "type": "number" },
+        "regressionTolerance": { "type": "number" }
+      }
+    },
+    "database.rlsIsolationTestsPassed": {
+      "type": "object",
+      "properties": {
+        "min": { "type": "number" },
+        "regressionTolerance": { "type": "number" }
+      }
+    }
+  }
+}

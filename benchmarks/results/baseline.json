@@ -1,0 +1,31 @@
+{
+  "commit": "abc1234",
+  "date": "2025-01-01T00:00:00.000Z",
+  "phase": "baseline",
+  "environment": "staging",
+  "corpusVersion": "v1",
+  "extraction": {
+    "medianProcessingTimeMs": 0,
+    "p95ProcessingTimeMs": 0,
+    "parseSuccessRate": 0,
+    "entityPrecision": 0,
+    "entityRecall": 0,
+    "relationF1": 0,
+    "evidenceAccuracy": 0,
+    "tokenCostPerPaperUsd": 0
+  },
+  "graph": {
+    "initialLayoutTimeMs": 0,
+    "nodeClickLatencyMs": 0,
+    "fullscreenTransitionMs": 0,
+    "layoutOverlapPercent": 0,
+    "dragFps": 0,
+    "multiPaperQueryRenderMs": 0
+  },
+  "database": {
+    "paperGraphQueryP95Ms": 0,
+    "indexHitRatio": 0,
+    "orphanRecords": 0,
+    "rlsIsolationTestsPassed": true
+  }
+}

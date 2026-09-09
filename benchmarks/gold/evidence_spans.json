@@ -1,0 +1,69 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Gold Standard Evidence Span Annotations",
+  "description": "Ground truth evidence span annotations for benchmark corpus papers. Maps entities and relations to their supporting text locations.",
+  "type": "object",
+  "properties": {
+    "annotations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "paperId": {
+            "type": "string",
+            "description": "Must match paperId in corpus metadata.json"
+          },
+          "evidenceSpans": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "spanId": {
+                  "type": "string",
+                  "description": "Unique identifier within this paper (e.g., 's1', 's2')"
+                },
+                "linkedEntityId": {
+                  "type": "string",
+                  "description": "References entityId from entities.json, OR"
+                },
+                "linkedRelationId": {
+                  "type": "string",
+                  "description": "References relationId from relations.json (one of linkedEntityId or linkedRelationId required)"
+                },
+                "page": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "Page number where evidence appears (1-indexed)"
+                },
+                "startOffset": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Character offset from start of page content"
+                },
+                "endOffset": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "description": "Character offset to end of evidence text"
+                },
+                "text": {
+                  "type": "string",
+                  "description": "Exact text of the evidence span"
+                }
+              },
+              "required": ["spanId", "page", "startOffset", "endOffset", "text"],
+              "oneOf": [
+                {"required": ["linkedEntityId"]},
+                {"required": ["linkedRelationId"]}
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": ["paperId", "evidenceSpans"],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": ["annotations"],
+  "additionalProperties": false
+}
