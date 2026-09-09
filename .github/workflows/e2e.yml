@@ -1,0 +1,67 @@
+name: E2E Regression
+on: [push, pull_request]
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    services:
+      supabase:
+        image: supabase/postgres:15.1.0.87
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Build application
+        run: npm run build
+      
+      - name: Apply database migrations
+        env:
+          SUPABASE_URL: http://localhost:5432
+          SUPABASE_ANON_KEY: test-key
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
+        run: npm run db:migrate:test
+      
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+      
+      - name: Run E2E tests
+        env:
+          SUPABASE_URL: http://localhost:5432
+          SUPABASE_ANON_KEY: test-key
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_db
+          LLMAPI_KEY: ${{ secrets.LLMAPI_KEY_TEST }}
+        run: npm run test:e2e
+      
+      - name: Upload test artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-failure-artifacts
+          path: test-results/
+          retention-days: 7
+      
+      - name: Publish test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-report
+          path: reports/e2e-report.html

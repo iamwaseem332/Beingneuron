@@ -7,49 +7,112 @@ dist/
 build/
 target/
 
-# Cache directories
-.cache/
-.node-cache/
-.npm/
-.yarn/
-
 # Logs
 *.log
 
-# Environment
+# Environment variables
 .env
 .env.local
-*.env.*
+.env.*
 
-# Editor/IDE
+# IDE
 .vscode/
 .idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
 *.swp
 *.swo
-*.tmp
 
-# Python (if applicable)
+# Python
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 .Python
+env/
 venv/
 .venv/
-.env/
-
-# Coverage reports
-coverage/
-htmlcov/
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
 .coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.out
+*.pid
+*.seed
+*.session
+.hypothesis/
+selenium-debug.log
+.flake8
+.isort.cfg
+.pytest_cache/
+.mypy_cache/
 
-# OS generated files
-.DS_Store
-Thumbs.db
+# Node.js
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+node_modules/
+jspm_packages/
+typings/
+.nyc_output
+coverage/
+.nyc_output/
+istanbul/
+.webpack/
+.next/
+.nuxt/
+.vuepress/dist
+.serverless/
+dists/
+dist-*/
+public/dist
+public/assets/js/vendor/
+public/assets/css/vendor/
+*.min.js
+*.min.css
+bundle.js
+bundle.js.map
+bundle-sfx.js
+bundle-sfx.js.map
+*.wasm
+.libs/
+node-pre-gyp/
+.nodemonignore
+nodemon-debug.log
+pm2 logs
 
-# TypeScript/JavaScript build output
-lib/
-esm/
-cjs/
-*.tsbuildinfo
+# Compression
+*.zip
+*.gz
+*.tar
+*.tgz
+*.bz2
+*.xz
+*.7z
+*.rar
+*.zst
+*.lz4
+*.lzh
+*.cab
+*.arj
+*.rpm
+*.deb
+*.Z
+*.lz
+*.lzo
+*.tar.gz
+*.tar.bz2
+*.tar.xz
+*.tar.zst
+
 ```
