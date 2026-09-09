@@ -1,56 +1,60 @@
 ```
 # Dependencies
 node_modules/
-.supabase/
 
-# Build outputs
+# Build artifacts
 dist/
 build/
 target/
-
-# Logs
-*.log
-
-# Environment variables
-.env
-.env.local
-*.env.*
-
-# Editor/IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*.tmp
 
 # Python
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
-.Python
-env/
+*.so
+*.egg-info/
+.eggs/
+
+# Virtual environments
 venv/
 .venv/
-.python-version
+env/
+ENV/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
 
 # Coverage
+.coverage
 coverage/
 htmlcov/
-.coverage
 
-# System
+# Environment variables
+.env
+.env.local
+*.env.*
+
+# OS generated files
 .DS_Store
 Thumbs.db
 
-# MyPy
+# Temporary files
+*.tmp
+*.temp
+
+# Cache directories
+.cache/
 .mypy_cache/
-
-# PyTest
 .pytest_cache/
-
-# Gradle
-.gradle/
+.nyc_output/
+coverage/
 
 # Compressed files
 *.zip
