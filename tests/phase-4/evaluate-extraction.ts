@@ -420,9 +420,12 @@ async function main() {
     console.log('Loading gold standard annotations...');
     const goldAnnotations = loadGoldStandard();
     console.log(`Loaded ${goldAnnotations.length} paper annotations\n`);
+
+    // WARNING: This is a SIMULATED evaluation - not running actual extraction pipeline
+    // In production, this would run the full extraction pipeline on each paper and compute real metrics
+    console.warn('⚠️  WARNING: Running in SIMULATED mode - metrics are placeholders, not real evaluation results');
+    console.warn('   To run actual evaluation, implement full pipeline integration in evaluate-extraction.ts\n');
     
-    // For now, generate placeholder results
-    // In actual implementation, this would run extraction on corpus
     const results: EvaluationResults = {
       timestamp: new Date().toISOString(),
       papersEvaluated: goldAnnotations.length,
@@ -466,8 +469,8 @@ async function main() {
         relationRecall: TARGETS.RELATION_RECALL,
         spanAccuracy: TARGETS.SPAN_ACCURACY
       },
-      passed: true,
-      failures: []
+      passed: false, // Cannot pass in simulated mode
+      failures: ['SIMULATED MODE: No actual evaluation performed - metrics are placeholders']
     };
     
     // Check against targets

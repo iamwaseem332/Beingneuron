@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS canonical_entities (
 CREATE TABLE IF NOT EXISTS entity_mentions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   canonical_entity_id UUID NOT NULL REFERENCES canonical_entities(id) ON DELETE CASCADE,
-  paper_id UUID NOT NULL REFERENCES papers(id) ON DELETE CASCADE,
+  paper_id UUID NOT NULL REFERENCES extracted_documents(id) ON DELETE CASCADE,
   chunk_id UUID NOT NULL,
   raw_mention TEXT NOT NULL,
   evidence_span JSONB NOT NULL,
