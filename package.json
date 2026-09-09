@@ -6,6 +6,7 @@
     "dev": "vite",
     "build": "vite build",
     "typecheck": "tsc --noEmit",
+    "test:phase-4": "tsx tests/phase-4/evaluate-extraction.ts",
     "benchmark:baseline": "tsx benchmarks/scripts/run-extraction-benchmark.ts --phase baseline --output benchmarks/results/baseline.json && tsx benchmarks/scripts/run-db-benchmark.ts --phase baseline --output benchmarks/results/baseline.json && tsx benchmarks/scripts/run-graph-benchmark.ts --phase baseline --output benchmarks/results/baseline.json",
     "benchmark:phase": "tsx benchmarks/scripts/run-extraction-benchmark.ts --phase $PHASE --output benchmarks/results/$PHASE.json && tsx benchmarks/scripts/run-db-benchmark.ts --phase $PHASE --output benchmarks/results/$PHASE.json && tsx benchmarks/scripts/run-graph-benchmark.ts --phase $PHASE --output benchmarks/results/$PHASE.json",
     "benchmark:compare": "tsx benchmarks/scripts/compare-results.ts --before benchmarks/results/baseline.json --after benchmarks/results/$PHASE.json"
@@ -25,7 +26,8 @@
     "react-router-dom": "^6.8.0",
     "recharts": "^2.10.0",
     "three": "^0.185.1",
-    "uuid": "^9.0.1"
+    "uuid": "^9.0.1",
+    "zod": "^4.5.4"
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",
