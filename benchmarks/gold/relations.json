@@ -1,0 +1,57 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Gold Standard Relation Annotations",
+  "description": "Ground truth relation annotations for benchmark corpus papers. Populate this file with manually annotated relations between entities.",
+  "type": "object",
+  "properties": {
+    "annotations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "paperId": {
+            "type": "string",
+            "description": "Must match paperId in corpus metadata.json"
+          },
+          "relations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "relationId": {
+                  "type": "string",
+                  "description": "Unique identifier within this paper (e.g., 'r1', 'r2')"
+                },
+                "subjectEntityId": {
+                  "type": "string",
+                  "description": "References entityId from entities.json (e.g., 'e1')"
+                },
+                "objectEntityId": {
+                  "type": "string",
+                  "description": "References entityId from entities.json (e.g., 'e2')"
+                },
+                "relationType": {
+                  "type": "string",
+                  "enum": ["uses", "extends", "contradicts", "cites", "evaluates_on", "proposes", "improves", "based_on"],
+                  "description": "Type of relationship between subject and object"
+                },
+                "confidence": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "Annotator confidence (1.0 = certain)"
+                }
+              },
+              "required": ["relationId", "subjectEntityId", "objectEntityId", "relationType", "confidence"],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": ["paperId", "relations"],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": ["annotations"],
+  "additionalProperties": false
+}

@@ -1,0 +1,16 @@
+{
+  "corpusVersion": "v1",
+  "lastUpdated": "2025-01-01T00:00:00.000Z",
+  "papers": [
+    {
+      "paperId": "paper-01",
+      "title": "[Paper Title]",
+      "fileName": "paper-01-identifier.pdf",
+      "pageCount": 0,
+      "tableDensity": "none",
+      "formulaCount": 0,
+      "citationCount": 0,
+      "sha256": ""
+    }
+  ]
+}

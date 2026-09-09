@@ -5,13 +5,16 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "benchmark:baseline": "tsx benchmarks/scripts/run-extraction-benchmark.ts --phase baseline --output benchmarks/results/baseline.json && tsx benchmarks/scripts/run-db-benchmark.ts --phase baseline --output benchmarks/results/baseline.json && tsx benchmarks/scripts/run-graph-benchmark.ts --phase baseline --output benchmarks/results/baseline.json",
+    "benchmark:phase": "tsx benchmarks/scripts/run-extraction-benchmark.ts --phase $PHASE --output benchmarks/results/$PHASE.json && tsx benchmarks/scripts/run-db-benchmark.ts --phase $PHASE --output benchmarks/results/$PHASE.json && tsx benchmarks/scripts/run-graph-benchmark.ts --phase $PHASE --output benchmarks/results/$PHASE.json",
+    "benchmark:compare": "tsx benchmarks/scripts/compare-results.ts --before benchmarks/results/baseline.json --after benchmarks/results/$PHASE.json"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.1.0",
     "@dnd-kit/sortable": "^8.0.0",
     "@dnd-kit/utilities": "^3.2.2",
-    "@supabase/supabase-js": "^2.98.0",
+    "@supabase/supabase-js": "^2.115.0",
     "canvas-confetti": "^1.9.3",
     "date-fns": "^2.30.0",
     "framer-motion": "^11.16.1",
@@ -25,14 +28,19 @@
     "uuid": "^9.0.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/vite": "^4.1.7",
     "@types/canvas-confetti": "^1.6.4",
+    "@types/node": "^26.4.1",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
     "@types/three": "^0.185.4",
     "@types/uuid": "^9.0.7",
     "@vitejs/plugin-react": "^4.3.4",
+    "ajv": "^8.20.0",
+    "playwright": "^1.63.0",
     "tailwindcss": "^4.1.7",
+    "tsx": "^4.23.13",
     "typescript": "^5.7.0",
     "vite": "^6.4.3"
   }
