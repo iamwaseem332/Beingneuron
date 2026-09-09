@@ -7,48 +7,49 @@ dist/
 build/
 target/
 
-# Python cache
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
+# Cache directories
+.cache/
+.node-cache/
+.npm/
+.yarn/
 
 # Logs
 *.log
 
-# Environment files
+# Environment
 .env
 .env.local
 *.env.*
 
-# Editor/IDE files
+# Editor/IDE
 .vscode/
 .idea/
 *.swp
 *.swo
 *.tmp
 
+# Python (if applicable)
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+venv/
+.venv/
+.env/
+
 # Coverage reports
 coverage/
 htmlcov/
 .coverage
 
-# MyPy cache
-.mypy_cache/
-# Pytest cache
-.pytest_cache/
-
-# Distribution / packaging
-*.tar.gz
-*.whl
-*.egg
-*.egg-info/
-
 # OS generated files
 .DS_Store
 Thumbs.db
 
-# Temporary files
-*.tmp
-*.temp
+# TypeScript/JavaScript build output
+lib/
+esm/
+cjs/
+*.tsbuildinfo
 ```
