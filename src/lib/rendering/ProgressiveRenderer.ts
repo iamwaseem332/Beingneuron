@@ -3,7 +3,7 @@
  * Implements priority-based disclosure with frustum culling and LOD strategies
  */
 
-import { GraphNode, GraphEdge } from '../graph/layouts/types';
+import type { GraphNode, GraphEdge, NodePosition } from '../graph/layouts/types';
 
 export interface ViewportMetrics {
   x: number;
@@ -15,7 +15,9 @@ export interface ViewportMetrics {
 
 export type RenderPriority = 'immediate' | 'deferred' | 'background';
 
-export interface RenderableNode extends GraphNode {
+export interface RenderableNode extends NodePosition {
+  id: string;
+  data?: any;
   priority: RenderPriority;
   lodLevel: 0 | 1 | 2; // 0=full detail, 1=simplified, 2=minimal
 }

@@ -5,9 +5,22 @@
  * drift in extraction quality, entity normalization, and synthesis accuracy.
  */
 
-import { Database } from '../types/database';
 import { ExtractedEntity, ExtractedRelation, EvidenceSpan } from '../extraction/schemas';
-import { CanonicalEntity } from '../synthesis/EntityNormalizer';
+import type { CanonicalEntity } from '../synthesis/types';
+
+// Minimal Database type for evaluation pipeline - replace with generated types when available
+interface Database {
+  public: {
+    Tables: {
+      canonical_entities: {
+        Row: CanonicalEntity;
+      };
+      entity_mentions: {
+        Row: any;
+      };
+    };
+  };
+}
 
 export interface EvaluationMetrics {
   // Entity extraction metrics

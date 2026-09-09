@@ -1,11 +1,11 @@
 # Phase 4 Extraction Validation Report
 
-Generated: 2026-09-09T06:24:23.550Z
+Generated: 2026-09-09T08:40:54.770Z
 
 ## Summary
 
 - **Papers Evaluated**: 0
-- **Overall Status**: ✅ PASSED
+- **Overall Status**: ❌ FAILED
 
 ## Entity Extraction Quality
 
@@ -45,7 +45,7 @@ Generated: 2026-09-09T06:24:23.550Z
 
 ## Failures
 
-None
+- SIMULATED MODE: No actual evaluation performed - metrics are placeholders
 
 ---
 

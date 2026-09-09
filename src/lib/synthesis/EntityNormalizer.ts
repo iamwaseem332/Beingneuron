@@ -4,15 +4,17 @@
  * for canonical entity registry
  */
 
-import { supabase } from '../supabase/client';
+import { supabase } from '../../supabase/client';
 import { ExtractedEntity } from '../extraction/schemas';
-import { 
+import type { 
   CanonicalEntity, 
   EntityMention, 
   NormalizationResult, 
   CurationQueueItem,
   EntityRegistryConfig 
 } from './types';
+
+export { CanonicalEntity };
 
 const DEFAULT_CONFIG: EntityRegistryConfig = {
   fuzzyMatchThreshold: 0.85,
