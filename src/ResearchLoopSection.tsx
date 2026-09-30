@@ -1,7 +1,15 @@
-import { useEffect, useRef, useState, useCallback, useMemo } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePrefersReducedMotion } from "./hooks";
 import { ButtonLink, Eyebrow, Reveal } from "./ui";
 import * as THREE from "three";
+import {
+  createOptimizer,
+  optimizerStep,
+  simulateRun,
+  surfaceLoss,
+  type OptimizerKind,
+  type OptimizerState,
+} from "./lossSurface";
 
 /* ==================== RESEARCH MODES DATA ==================== */
 
@@ -26,13 +34,13 @@ const RESEARCH_CONCEPTS: ResearchConcept[] = [
     code: `def gradient_descent(w, lr, steps=100):
     """Optimize parameters by following negative gradient."""
     for step in range(steps):
-        grad = compute_gradient(w)
-        w -= lr * grad
-        
-        if step % 10 == 0:
-            loss = compute_loss(w)
-            print(f"Iteration {step}: Loss = {loss:.4f}")
-    
+        grad = compute_gradient(w)     # ∇L at current point
+        w -= lr * grad                 # step downhill
+        loss = compute_loss(w)         # L(w_t) after the update
+
+        if converged(grad, lr):        # ‖∇L‖ ≈ 0 → stop early
+            break
+
     return w`,
   },
   {
@@ -106,228 +114,439 @@ const RESEARCH_CONCEPTS: ResearchConcept[] = [
 
 /* ==================== GRADIENT DESCENT 3D VISUALIZATION ==================== */
 
-function GradientDescent3D({
+const OPTIMIZERS: { id: OptimizerKind; label: string; defaultLr: number }[] = [
+  { id: "gd", label: "Vanilla GD", defaultLr: 0.3 },
+  { id: "momentum", label: "Momentum", defaultLr: 0.1 },
+  { id: "nesterov", label: "Nesterov", defaultLr: 0.1 },
+  { id: "rmsprop", label: "RMSProp", defaultLr: 0.1 },
+  { id: "adam", label: "Adam", defaultLr: 0.1 },
+];
+
+const MAX_STEPS = 400;
+/** Fixed starting point so optimizer comparisons are apples-to-apples. */
+const START_POS = { x: -2.1, z: 1.6 };
+/** Height scale used by every mesh so surfaces stay consistent. */
+const HEIGHT_SCALE = 0.55;
+
+function GradientDescent3DBase({
   isActive,
   reducedMotion,
   onIterationChange,
   onLossChange,
+  onStatusChange,
 }: {
   isActive: boolean;
   reducedMotion: boolean;
   onIterationChange: (iter: number) => void;
   onLossChange: (loss: number) => void;
+  onStatusChange: (status: string) => void;
 }) {
   const mountRef = useRef<HTMLDivElement>(null);
-  const sceneRef = useRef<THREE.Scene | null>(null);
-  const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
-  const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
-  const animationRef = useRef<number>(0);
-  const timeRef = useRef(0);
-  
-  // Optimization state
-  const positionRef = useRef<{ x: number; z: number }>({ x: -2, z: -2 });
-  const trajectoryRef = useRef<{ x: number; z: number }[]>([]);
-  const iterationRef = useRef(0);
-  
+  const [optimizerKind, setOptimizerKind] = useState<OptimizerKind>("gd");
+  const [learningRate, setLearningRate] = useState<number>(0.3);
+  const [runKey, setRunKey] = useState(0);
+
+  // Live readouts for the control bar (throttled — not per frame).
+  const [hud, setHud] = useState({ iter: 0, loss: 0, status: "" });
+
+  // Refs consumed inside the animation loop (avoid re-creating the scene).
+  const optimizerKindRef = useRef<OptimizerKind>(optimizerKind);
+  const learningRateRef = useRef<number>(learningRate);
+  const resetRequestedRef = useRef(false);
+  const reportThrottleRef = useRef(0);
+
+  // Keep refs in sync with UI state.
   useEffect(() => {
-    if (!mountRef.current || !isActive) return;
-    
-    // Scene setup
+    optimizerKindRef.current = optimizerKind;
+    resetRequestedRef.current = true;
+  }, [optimizerKind]);
+  useEffect(() => {
+    learningRateRef.current = learningRate;
+    resetRequestedRef.current = true;
+  }, [learningRate]);
+  useEffect(() => {
+    resetRequestedRef.current = true;
+  }, [runKey]);
+
+  // Parent-facing telemetry callbacks kept in refs so the heavy WebGL effect
+  // never tears down / rebuilds when parent state changes identity.
+  const callbacksRef = useRef({ onIterationChange, onLossChange, onStatusChange });
+  useEffect(() => {
+    callbacksRef.current = { onIterationChange, onLossChange, onStatusChange };
+  }, [onIterationChange, onLossChange, onStatusChange]);
+
+  const restartRun = useCallback(() => {
+    setRunKey((k) => k + 1);
+    setHud({ iter: 0, loss: 0, status: "" });
+  }, []);
+
+  const selectOptimizer = useCallback((kind: OptimizerKind) => {
+    setOptimizerKind(kind);
+    const preset = OPTIMIZERS.find((o) => o.id === kind);
+    if (preset) setLearningRate(preset.defaultLr);
+  }, []);
+
+  /* ---------- Three.js scene: created once per activation ---------- */
+  useEffect(() => {
+    const mount = mountRef.current;
+    if (!mount || !isActive) return;
+
+    const width = mount.clientWidth || 1;
+    const height = mount.clientHeight || 1;
+
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x0b1a26);
-    sceneRef.current = scene;
-    
-    // Camera
-    const camera = new THREE.PerspectiveCamera(
-      45,
-      mountRef.current.clientWidth / mountRef.current.clientHeight,
-      0.1,
-      100
-    );
-    camera.position.set(4, 3, 4);
-    camera.lookAt(0, 0, 0);
-    cameraRef.current = camera;
-    
-    // Renderer
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(mountRef.current.clientWidth, mountRef.current.clientHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    mountRef.current.appendChild(renderer.domElement);
-    rendererRef.current = renderer;
-    
-    // Create loss surface (bowl-shaped)
-    const surfaceSize = 5;
-    const segments = 50;
-    const geometry = new THREE.PlaneGeometry(surfaceSize * 2, surfaceSize * 2, segments, segments);
-    geometry.rotateX(-Math.PI / 2);
-    
-    const positions = geometry.attributes.position.array;
-    for (let i = 0; i < positions.length; i += 3) {
-      const x = positions[i];
-      const z = positions[i + 2];
-      // Bowl shape: z = x^2 + y^2 (but y is up in our rotated space)
-      const y = 0.3 * (x * x + z * z);
-      positions[i + 1] = y;
+    scene.fog = new THREE.Fog(0x0b1a26, 9, 16);
+
+    const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
+    camera.position.set(4.2, 3.4, 4.2);
+    camera.lookAt(0, 0.4, 0);
+
+    let renderer: THREE.WebGLRenderer;
+    try {
+      renderer = new THREE.WebGLRenderer({ antialias: true });
+    } catch {
+      return; // WebGL unavailable — controls-only mode still renders below.
     }
-    geometry.computeVertexNormals();
-    
-    const material = new THREE.MeshPhongMaterial({
-      color: 0x1e384b,
-      emissive: 0x0b1a26,
-      emissiveIntensity: 0.2,
-      side: THREE.DoubleSide,
-      wireframe: false,
+    renderer.setSize(width, height);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    mount.appendChild(renderer.domElement);
+
+    /* ---- Loss surface: colored by loss (blue valleys → amber peaks) ---- */
+    const SEGMENTS = 64;
+    const EXTENT = 2.6;
+    const geometry = new THREE.PlaneGeometry(EXTENT * 2, EXTENT * 2, SEGMENTS, SEGMENTS);
+    geometry.rotateX(-Math.PI / 2);
+
+    const lossColorLow = new THREE.Color(0x155e70);
+    const lossColorMid = new THREE.Color(0x12a392);
+    const lossColorHigh = new THREE.Color(0xecab42);
+    const tmpColor = new THREE.Color();
+
+    const vertexCount = (SEGMENTS + 1) * (SEGMENTS + 1);
+    const colors = new Float32Array(vertexCount * 3);
+    geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+
+    const positionsAttr = geometry.attributes.position as THREE.BufferAttribute;
+    const maxLoss = surfaceLoss({ x: EXTENT, z: EXTENT }) * 1.1;
+
+    const paintSurface = () => {
+      for (let i = 0; i < positionsAttr.count; i++) {
+        const x = positionsAttr.getX(i);
+        const z = positionsAttr.getZ(i);
+        const loss = surfaceLoss({ x, z });
+        positionsAttr.setY(i, loss * HEIGHT_SCALE);
+        const t = Math.min(1, Math.max(0, loss / maxLoss));
+        if (t < 0.5) tmpColor.copy(lossColorLow).lerp(lossColorMid, t * 2);
+        else tmpColor.copy(lossColorMid).lerp(lossColorHigh, (t - 0.5) * 2);
+        colors[i * 3] = tmpColor.r;
+        colors[i * 3 + 1] = tmpColor.g;
+        colors[i * 3 + 2] = tmpColor.b;
+      }
+      positionsAttr.needsUpdate = true;
+      (geometry.attributes.color as THREE.BufferAttribute).needsUpdate = true;
+      geometry.computeVertexNormals();
+    };
+    paintSurface();
+
+    const material = new THREE.MeshStandardMaterial({
+      vertexColors: true,
+      roughness: 0.8,
+      metalness: 0.1,
       transparent: true,
-      opacity: 0.9,
+      opacity: 0.95,
+      side: THREE.DoubleSide,
     });
-    
-    const surface = new THREE.Mesh(geometry, material);
-    scene.add(surface);
-    
-    // Wireframe overlay
+    const surfaceMesh = new THREE.Mesh(geometry, material);
+    scene.add(surfaceMesh);
+
+    // Contour-like wireframe overlay riding just above the surface.
     const wireGeo = new THREE.WireframeGeometry(geometry);
     const wireMat = new THREE.LineBasicMaterial({
-      color: 0x35c4ae,
-      transparent: true,
-      opacity: 0.15,
-    });
-    const wireframe = new THREE.LineSegments(wireGeo, wireMat);
-    scene.add(wireframe);
-    
-    // Grid helper
-    const gridHelper = new THREE.GridHelper(10, 10, 0x5f7d92, 0x1e384b);
-    gridHelper.position.y = -0.01;
-    scene.add(gridHelper);
-    
-    // Axes
-    const axesHelper = new THREE.AxesHelper(1);
-    scene.add(axesHelper);
-    
-    // Optimization point (ball)
-    const ballGeo = new THREE.SphereGeometry(0.12, 16, 16);
-    const ballMat = new THREE.MeshPhongMaterial({
-      color: 0x35c4ae,
-      emissive: 0x12a392,
-      emissiveIntensity: 0.5,
-    });
-    const ball = new THREE.Mesh(ballGeo, ballMat);
-    scene.add(ball);
-    
-    // Trajectory line
-    const trailGeo = new THREE.BufferGeometry();
-    const trailMat = new THREE.LineBasicMaterial({
       color: 0x7ce4d0,
       transparent: true,
-      opacity: 0.6,
+      opacity: 0.08,
     });
-    const trail = new THREE.Line(trailGeo, trailMat);
-    scene.add(trail);
-    
-    // Minimum marker
-    const minGeo = new THREE.RingGeometry(0.08, 0.12, 16);
+    const wireframe = new THREE.LineSegments(wireGeo, wireMat);
+    wireframe.scale.set(1, 1.002, 1);
+    wireframe.position.y = 0.005;
+    scene.add(wireframe);
+
+    /* ---- Minimum marker (the global optimum sits at the origin) ---- */
+    const minGeo = new THREE.RingGeometry(0.09, 0.13, 24);
     const minMat = new THREE.MeshBasicMaterial({
       color: 0xecab42,
       transparent: true,
-      opacity: 0.7,
+      opacity: 0.85,
       side: THREE.DoubleSide,
     });
     const minMarker = new THREE.Mesh(minGeo, minMat);
     minMarker.rotation.x = -Math.PI / 2;
     minMarker.position.y = 0.02;
     scene.add(minMarker);
-    
-    // Lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
-    scene.add(ambientLight);
-    
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-    directionalLight.position.set(3, 5, 2);
-    scene.add(directionalLight);
-    
-    const pointLight = new THREE.PointLight(0x35c4ae, 0.5, 10);
-    pointLight.position.set(2, 2, 2);
-    scene.add(pointLight);
-    
-    // Reset state
-    positionRef.current = { x: -2, z: -2 };
-    trajectoryRef.current = [{ x: -2, z: -2 }];
-    iterationRef.current = 0;
-    
-    // Animation loop
-    let lastUpdate = 0;
-    const updateInterval = reducedMotion ? 500 : 80;
-    
-    const animate = (time: number) => {
-      animationRef.current = requestAnimationFrame(animate);
-      
+
+    /* ---- Ball (current iterate) + gradient arrow ---- */
+    const ballGeo = new THREE.SphereGeometry(0.11, 20, 20);
+    const ballMat = new THREE.MeshStandardMaterial({
+      color: 0x7ce4d0,
+      emissive: 0x35c4ae,
+      emissiveIntensity: 0.7,
+      roughness: 0.3,
+    });
+    const ball = new THREE.Mesh(ballGeo, ballMat);
+    scene.add(ball);
+
+    const arrowDir = new THREE.Vector3(1, 0, 0);
+    const arrow = new THREE.ArrowHelper(arrowDir, new THREE.Vector3(), 0.5, 0xecab42, 0.14, 0.09);
+    scene.add(arrow);
+
+    /* ---- Trail: preallocated buffer, drawn with setDrawRange ---- */
+    const TRAIL_MAX = MAX_STEPS + 2;
+    const trailPositions = new Float32Array(TRAIL_MAX * 3);
+    const trailColors = new Float32Array(TRAIL_MAX * 3);
+    const trailGeo = new THREE.BufferGeometry();
+    trailGeo.setAttribute("position", new THREE.BufferAttribute(trailPositions, 3));
+    trailGeo.setAttribute("color", new THREE.BufferAttribute(trailColors, 3));
+    const trailMat = new THREE.LineBasicMaterial({
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.95,
+    });
+    const trail = new THREE.Line(trailGeo, trailMat);
+    scene.add(trail);
+
+    const trailColorHead = new THREE.Color(0xd7fff4);
+    const trailColorTail = new THREE.Color(0x12a392);
+
+    const writeTrailPoint = (index: number, x: number, z: number) => {
+      const y = surfaceLoss({ x, z }) * HEIGHT_SCALE + 0.015;
+      trailPositions[index * 3] = x;
+      trailPositions[index * 3 + 1] = y;
+      trailPositions[index * 3 + 2] = z;
+    };
+
+    const refreshTrailColors = (count: number) => {
+      for (let i = 0; i < count; i++) {
+        const t = count <= 1 ? 1 : i / (count - 1);
+        tmpColor.copy(trailColorTail).lerp(trailColorHead, t);
+        trailColors[i * 3] = tmpColor.r;
+        trailColors[i * 3 + 1] = tmpColor.g;
+        trailColors[i * 3 + 2] = tmpColor.b;
+      }
+      (trailGeo.attributes.color as THREE.BufferAttribute).needsUpdate = true;
+    };
+
+    /* ---- Lights ---- */
+    scene.add(new THREE.AmbientLight(0xffffff, 0.45));
+    const keyLight = new THREE.DirectionalLight(0xffffff, 1.1);
+    keyLight.position.set(3, 6, 2);
+    scene.add(keyLight);
+    const rimLight = new THREE.PointLight(0x35c4ae, 0.6, 12);
+    rimLight.position.set(-3, 2.5, -2);
+    scene.add(rimLight);
+
+    /* ---- Run state (rebuilt on reset, mutated per step) ---- */
+    interface RunState {
+      opt: OptimizerState;
+      steps: number;
+      done: boolean;
+      paused: boolean;
+      elapsedSinceStep: number;
+      /** Reduced motion: precomputed path replayed deterministically. */
+      scripted: { xs: Float32Array; zs: Float32Array; n: number } | null;
+      scriptIndex: number;
+      idlePhase: number;
+    }
+
+    let run: RunState;
+
+    const applyCurrentPosition = () => {
+      const p = run.opt.pos;
+      const y = surfaceLoss(p) * HEIGHT_SCALE;
+      ball.position.set(p.x, y + 0.11, p.z);
+      const g = run.opt.g;
+      const gn = Math.hypot(g.x, g.z);
+      if (gn > 1e-6) {
+        arrow.visible = true;
+        arrow.position.set(p.x, y + 0.12, p.z);
+        arrowDir.set(-g.x / gn, 0, -g.z / gn).normalize();
+        arrow.setDirection(arrowDir);
+        arrow.setLength(Math.min(0.9, 0.25 + gn * 0.8), 0.14, 0.09);
+      } else {
+        arrow.visible = false;
+      }
+    };
+
+    const pushTrailPoint = () => {
+      const idx = run.steps; // point 0 = start, then one per step
+      if (idx >= TRAIL_MAX) return;
+      writeTrailPoint(idx, run.opt.pos.x, run.opt.pos.z);
+      (trailGeo.attributes.position as THREE.BufferAttribute).needsUpdate = true;
+      trailGeo.setDrawRange(0, idx + 1);
+      refreshTrailColors(idx + 1);
+    };
+
+    const resetRun = () => {
+      const kind = optimizerKindRef.current;
+      const lr = learningRateRef.current;
+      run = {
+        opt: createOptimizer(kind, START_POS, lr),
+        steps: 0,
+        done: false,
+        paused: false,
+        elapsedSinceStep: 0,
+        scripted: null,
+        scriptIndex: 0,
+        idlePhase: 0,
+      };
+      writeTrailPoint(0, START_POS.x, START_POS.z);
+      trailGeo.setDrawRange(0, 1);
+      refreshTrailColors(1);
+      applyCurrentPosition();
+      reportThrottleRef.current = 0;
+      callbacksRef.current.onIterationChange(0);
+      callbacksRef.current.onLossChange(surfaceLoss(START_POS));
+      callbacksRef.current.onStatus("");
+      setHud({ iter: 0, loss: surfaceLoss(START_POS), status: "" });
+    };
+
+    const finishRun = (converged: boolean) => {
+      run.done = true;
+      const msg = converged
+        ? `Converged · ${run.steps} steps`
+        : `Max steps reached · loss ${surfaceLoss(run.opt.pos).toExponential(1)}`;
+      callbacksRef.current.onStatus(msg);
+      setHud((h) => ({ ...h, status: msg }));
+    };
+
+    const takeStep = () => {
+      if (run.steps >= MAX_STEPS) {
+        finishRun(false);
+        return;
+      }
+      const alive = optimizerStep(run.opt);
+      run.steps += 1;
+      pushTrailPoint();
+      applyCurrentPosition();
+
+      const loss = surfaceLoss(run.opt.pos);
+      // Throttle React updates to ~5/s; the 3D scene itself stays smooth.
+      reportThrottleRef.current += 1;
+      if (reportThrottleRef.current % 3 === 0 || alive === false) {
+        callbacksRef.current.onIterationChange(run.steps);
+        callbacksRef.current.onLossChange(loss);
+        setHud((h) => ({ ...h, iter: run.steps, loss }));
+      }
+      if (!alive) finishRun(true);
+    };
+
+    /** Reduced-motion path: simulate everything up front, replay statically. */
+    const buildScriptedRun = () => {
+      const result = simulateRun(optimizerKindRef.current, START_POS, learningRateRef.current, MAX_STEPS);
+      const n = result.trajectory.length;
+      const xs = new Float32Array(n);
+      const zs = new Float32Array(n);
+      for (let i = 0; i < n; i++) {
+        xs[i] = result.trajectory[i].x;
+        zs[i] = result.trajectory[i].z;
+        writeTrailPoint(i, xs[i], zs[i]);
+      }
+      trailGeo.setDrawRange(0, n);
+      refreshTrailColors(n);
+      run.scripted = { xs, zs, n };
+      run.scriptIndex = n - 1;
+      const p = result.trajectory[n - 1];
+      ball.position.set(p.x, surfaceLoss(p) * HEIGHT_SCALE + 0.11, p.z);
+      arrow.visible = false;
+      const msg = result.converged
+        ? `Converged · ${result.iterations} steps (static)`
+        : `Truncated · ${result.iterations} steps (static)`;
+      callbacksRef.current.onIterationChange(result.iterations);
+      callbacksRef.current.onLossChange(result.finalLoss);
+      callbacksRef.current.onStatus(msg);
+      setHud({ iter: result.iterations, loss: result.finalLoss, status: msg });
+      run.done = true;
+    };
+
+    resetRun();
+    if (reducedMotion) buildScriptedRun();
+    resetRequestedRef.current = false;
+
+    /* ---- Animation loop (delta-timed, tab-visibility aware) ---- */
+    let raf = 0;
+    let lastTime = performance.now();
+
+    const STEP_INTERVAL_MS = 60;
+
+    const animate = (now: number) => {
+      raf = requestAnimationFrame(animate);
+      const dt = Math.min(now - lastTime, 250); // clamp after tab-switch stalls
+      lastTime = now;
+
+      if (document.hidden) {
+        renderer.render(scene, camera);
+        return;
+      }
+
+      if (resetRequestedRef.current) {
+        resetRun();
+        resetRequestedRef.current = false;
+        if (reducedMotion) buildScriptedRun();
+      }
+
+      // Slow camera orbit around the bowl.
       if (!reducedMotion) {
-        // Subtle camera orbit
-        const orbitSpeed = 0.0002;
-        const radius = 5.5;
-        camera.position.x = Math.sin(time * orbitSpeed) * radius;
-        camera.position.z = Math.cos(time * orbitSpeed) * radius;
-        camera.lookAt(0, 0, 0);
+        const orbitSpeed = 0.00012;
+        const radius = 5.4;
+        camera.position.x = Math.sin(now * orbitSpeed) * radius;
+        camera.position.z = Math.cos(now * orbitSpeed) * radius;
+        camera.position.y = 3.2 + Math.sin(now * orbitSpeed * 0.7) * 0.35;
+        camera.lookAt(0, 0.35, 0);
       }
-      
-      // Update optimization
-      if (time - lastUpdate > updateInterval && isActive) {
-        lastUpdate = time;
-        
-        const pos = positionRef.current;
-        const lr = 0.05;
-        
-        // Gradient of f(x,z) = 0.3*(x^2 + z^2)
-        const gradX = 0.6 * pos.x;
-        const gradZ = 0.6 * pos.z;
-        
-        pos.x -= lr * gradX;
-        pos.z -= lr * gradZ;
-        
-        // Calculate y on surface
-        const y = 0.3 * (pos.x * pos.x + pos.z * pos.z);
-        ball.position.set(pos.x, y + 0.12, pos.z);
-        
-        // Update trajectory
-        trajectoryRef.current.push({ x: pos.x, z: pos.z });
-        if (trajectoryRef.current.length > 100) {
-          trajectoryRef.current.shift();
+
+      // Pulse the minimum marker.
+      const pulseScale = 1 + Math.sin(now * 0.004) * 0.15;
+      minMarker.scale.set(pulseScale, pulseScale, 1);
+
+      if (!run.done && !run.paused) {
+        if (reducedMotion) {
+          // Static mode: nothing to advance (already fully drawn).
+          run.done = true;
+        } else {
+          run.elapsedSinceStep += dt;
+          while (run.elapsedSinceStep >= STEP_INTERVAL_MS && !run.done) {
+            run.elapsedSinceStep -= STEP_INTERVAL_MS;
+            takeStep();
+          }
         }
-        
-        // Update trail geometry
-        const trailPoints = trajectoryRef.current.map((p) => {
-          const ty = 0.3 * (p.x * p.x + p.z * p.z);
-          return new THREE.Vector3(p.x, ty + 0.01, p.z);
-        });
-        trail.geometry.dispose();
-        trail.geometry = new THREE.BufferGeometry().setFromPoints(trailPoints);
-        
-        // Update iteration and loss
-        iterationRef.current += 1;
-        const loss = 0.3 * (pos.x * pos.x + pos.z * pos.z);
-        onIterationChange(iterationRef.current);
-        onLossChange(loss);
+      } else if (run.done && !reducedMotion) {
+        // Hold the finished run for a beat, then auto-restart the demo loop.
+        run.idlePhase += dt;
+        if (run.idlePhase > 6000) {
+          run.idlePhase = 0;
+          resetRequestedRef.current = true;
+        }
       }
-      
+
       renderer.render(scene, camera);
     };
-    
-    animate(0);
-    
-    // Handle resize
+    raf = requestAnimationFrame(animate);
+
+    /* ---- Resize handling via ResizeObserver (container-driven) ---- */
     const handleResize = () => {
-      if (!mountRef.current || !camera || !renderer) return;
-      camera.aspect = mountRef.current.clientWidth / mountRef.current.clientHeight;
+      if (!mount) return;
+      const w = mount.clientWidth || 1;
+      const h = mount.clientHeight || 1;
+      camera.aspect = w / h;
       camera.updateProjectionMatrix();
-      renderer.setSize(mountRef.current.clientWidth, mountRef.current.clientHeight);
+      renderer.setSize(w, h);
     };
-    
-    window.addEventListener("resize", handleResize);
-    
+    const ro = new ResizeObserver(handleResize);
+    ro.observe(mount);
+
     return () => {
-      window.removeEventListener("resize", handleResize);
-      cancelAnimationFrame(animationRef.current);
-      
-      // Cleanup Three.js resources
+      ro.disconnect();
+      cancelAnimationFrame(raf);
       geometry.dispose();
       material.dispose();
       wireGeo.dispose();
@@ -338,16 +557,87 @@ function GradientDescent3D({
       trailMat.dispose();
       minGeo.dispose();
       minMat.dispose();
+      arrow.dispose();
       renderer.dispose();
-      
-      if (mountRef.current && renderer.domElement) {
-        mountRef.current.removeChild(renderer.domElement);
+      if (renderer.domElement.parentNode === mount) {
+        mount.removeChild(renderer.domElement);
       }
     };
-  }, [isActive, reducedMotion, onIterationChange, onLossChange]);
-  
-  return <div ref={mountRef} className="h-full w-full" />;
+  }, [isActive, reducedMotion]);
+
+  /* ---------- Interactive controls ---------- */
+  return (
+    <div className="relative h-full w-full">
+      <div ref={mountRef} className="h-full w-full" />
+
+      {/* Control bar */}
+      <div className="absolute left-3 top-3 flex flex-col gap-2">
+        <div className="flex flex-wrap gap-1 rounded-lg border border-ink-800/60 bg-[#0b1a26]/85 p-1 backdrop-blur-sm">
+          {OPTIMIZERS.map((o) => {
+            const selected = o.id === optimizerKind;
+            return (
+              <button
+                key={o.id}
+                type="button"
+                onClick={() => selectOptimizer(o.id)}
+                aria-pressed={selected}
+                className={`rounded-md px-2 py-1 font-mono text-[9px] uppercase tracking-wider transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-pulse-400 ${
+                  selected
+                    ? "bg-pulse-500/20 text-pulse-300"
+                    : "text-ink-300 hover:bg-ink-800/50 hover:text-paper"
+                }`}
+              >
+                {o.label}
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="flex items-center gap-2 rounded-lg border border-ink-800/60 bg-[#0b1a26]/85 px-2.5 py-1.5 backdrop-blur-sm">
+          <label
+            htmlFor="gd-learning-rate"
+            className="font-mono text-[9px] uppercase tracking-wider text-ink-400"
+          >
+            LR
+          </label>
+          <input
+            id="gd-learning-rate"
+            type="range"
+            min={0.01}
+            max={0.5}
+            step={0.01}
+            value={learningRate}
+            onChange={(e) => setLearningRate(Number(e.target.value))}
+            className="h-1 w-24 cursor-pointer appearance-none rounded-full bg-ink-700 accent-[#35c4ae]"
+            aria-label="Learning rate"
+          />
+          <span className="w-8 font-mono text-[10px] text-pulse-300">{learningRate.toFixed(2)}</span>
+          <button
+            type="button"
+            onClick={restartRun}
+            className="ml-1 rounded-md border border-ink-800/80 px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider text-ink-300 transition-colors hover:border-pulse-400 hover:text-pulse-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-pulse-400"
+            aria-label="Restart optimization run"
+          >
+            Restart
+          </button>
+        </div>
+      </div>
+
+      {/* Live HUD */}
+      <div className="pointer-events-none absolute bottom-3 left-3 rounded-lg border border-ink-800/60 bg-[#0b1a26]/85 px-3 py-1.5 font-mono text-[10px] leading-relaxed text-ink-300 backdrop-blur-sm">
+        <span className="text-pulse-300">{hud.iter}</span> steps · loss{" "}
+        <span className="text-pulse-300">{hud.loss.toExponential(2)}</span>
+        {hud.status && (
+          <div className="mt-0.5 text-[9px] uppercase tracking-wider text-[#ecab42]">
+            {hud.status}
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
+
+const GradientDescent3D = memo(GradientDescent3DBase);
 
 /* ==================== LINEAR REGRESSION VISUALIZATION ==================== */
 
@@ -896,9 +1186,15 @@ export default function ResearchLoopSection() {
   // Visualization state
   const [iteration, setIteration] = useState(0);
   const [loss, setLoss] = useState(0);
+  const [gdStatus, setGdStatus] = useState("");
   const [mse, setMse] = useState(0);
   const [algoStep, setAlgoStep] = useState(0);
   const [algoFound, setAlgoFound] = useState(false);
+
+  // Stable callbacks — keeps the memoized 3D visual from re-rendering churn.
+  const handleIterationChange = useCallback((n: number) => setIteration(n), []);
+  const handleLossChange = useCallback((l: number) => setLoss(l), []);
+  const handleGdStatusChange = useCallback((s: string) => setGdStatus(s), []);
   
   const activeConcept = RESEARCH_CONCEPTS[activeIndex];
   const totalConcepts = RESEARCH_CONCEPTS.length;
@@ -944,8 +1240,13 @@ export default function ResearchLoopSection() {
   // Determine active line for code highlighting based on concept
   const getActiveCodeLine = () => {
     switch (activeConcept.id) {
-      case "gradient-descent":
-        return Math.min(4 + (iteration % 3), 7);
+      case "gradient-descent": {
+        // Map the live optimizer loop onto the Python snippet's lines:
+        // 4 grad · 5 update · 6 loss · 8 convergence check · 9 break
+        if (gdStatus.startsWith("Converged")) return 8;
+        const phase = iteration % 3;
+        return 4 + phase;
+      }
       case "linear-regression":
         return Math.min(5 + (Math.floor(iteration / 2) % 3), 10);
       case "paper-graph":
@@ -1085,8 +1386,9 @@ export default function ResearchLoopSection() {
                   <GradientDescent3D
                     isActive={activeIndex === 0}
                     reducedMotion={reducedMotion}
-                    onIterationChange={setIteration}
-                    onLossChange={setLoss}
+                    onIterationChange={handleIterationChange}
+                    onLossChange={handleLossChange}
+                    onStatusChange={handleGdStatusChange}
                   />
                 )}
                 
@@ -1113,23 +1415,27 @@ export default function ResearchLoopSection() {
               </div>
               
               {/* Metadata overlay */}
-              <div className="absolute bottom-4 right-4 flex gap-4 rounded-lg border border-ink-800/60 bg-[#0b1a26]/90 px-3 py-2 backdrop-blur-sm">
+              <div className="pointer-events-none absolute bottom-4 right-4 max-w-[55%] rounded-lg border border-ink-800/60 bg-[#0b1a26]/90 px-3 py-2 backdrop-blur-sm">
                 {activeConcept.id === "gradient-descent" && (
                   <>
-                    <div className="text-right">
-                      <div className="font-mono text-[9px] uppercase tracking-wider text-ink-400">Iteration</div>
-                      <div className="font-mono text-sm text-pulse-300">{iteration}</div>
+                    <div className="flex items-end justify-end gap-4">
+                      <div className="text-right">
+                        <div className="font-mono text-[9px] uppercase tracking-wider text-ink-400">Iteration</div>
+                        <div className="font-mono text-sm text-pulse-300">{iteration}</div>
+                      </div>
+                      <div className="h-8 w-[1px] bg-ink-800" />
+                      <div className="text-right">
+                        <div className="font-mono text-[9px] uppercase tracking-wider text-ink-400">Loss</div>
+                        <div className="font-mono text-sm text-pulse-300">
+                          {loss > 0 && loss < 1e-3 ? loss.toExponential(1) : loss.toFixed(4)}
+                        </div>
+                      </div>
                     </div>
-                    <div className="h-8 w-[1px] bg-ink-800" />
-                    <div className="text-right">
-                      <div className="font-mono text-[9px] uppercase tracking-wider text-ink-400">Loss</div>
-                      <div className="font-mono text-sm text-pulse-300">{loss.toFixed(4)}</div>
-                    </div>
-                    <div className="h-8 w-[1px] bg-ink-800" />
-                    <div className="text-right">
-                      <div className="font-mono text-[9px] uppercase tracking-wider text-ink-400">LR</div>
-                      <div className="font-mono text-sm text-pulse-300">0.05</div>
-                    </div>
+                    {gdStatus && (
+                      <div className="mt-1 text-right font-mono text-[9px] uppercase tracking-wider text-[#ecab42]">
+                        {gdStatus}
+                      </div>
+                    )}
                   </>
                 )}
                 
