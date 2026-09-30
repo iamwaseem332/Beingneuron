@@ -406,7 +406,7 @@ function GradientDescent3DBase({
       reportThrottleRef.current = 0;
       callbacksRef.current.onIterationChange(0);
       callbacksRef.current.onLossChange(surfaceLoss(START_POS));
-      callbacksRef.current.onStatus("");
+      callbacksRef.current.onStatusChange("");
       setHud({ iter: 0, loss: surfaceLoss(START_POS), status: "" });
     };
 
@@ -415,7 +415,7 @@ function GradientDescent3DBase({
       const msg = converged
         ? `Converged · ${run.steps} steps`
         : `Max steps reached · loss ${surfaceLoss(run.opt.pos).toExponential(1)}`;
-      callbacksRef.current.onStatus(msg);
+      callbacksRef.current.onStatusChange(msg);
       setHud((h) => ({ ...h, status: msg }));
     };
 
@@ -463,7 +463,7 @@ function GradientDescent3DBase({
         : `Truncated · ${result.iterations} steps (static)`;
       callbacksRef.current.onIterationChange(result.iterations);
       callbacksRef.current.onLossChange(result.finalLoss);
-      callbacksRef.current.onStatus(msg);
+      callbacksRef.current.onStatusChange(msg);
       setHud({ iter: result.iterations, loss: result.finalLoss, status: msg });
       run.done = true;
     };
